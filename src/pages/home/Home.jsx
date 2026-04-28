@@ -5,6 +5,7 @@ import WatchHistory from './watchHistory/WatchHistory';
 import Trending from './trending/Trending';
 import Popular from './popular/Popular';
 import TopRated from './topRated/TopRated';
+import TrendingIndia from './trendingIndia/TrendingIndia';
 
 
 const home = () => {
@@ -12,6 +13,7 @@ const home = () => {
     <div>
       <HeroBanner />
       <WatchHistory />
+      <TrendingIndia />
       <Trending />
       <Popular />
       <TopRated />
