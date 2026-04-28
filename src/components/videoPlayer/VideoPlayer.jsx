@@ -60,7 +60,8 @@ const VideoPlayer = ({ mediaType, tmdbId, data }) => {
         setIframeKey((k) => k + 1);
     }, [season, episode]);
 
-    // Fallback timer — if iframe doesn't load successfully within 5s, try next
+    // Fallback timer — Disabled auto-switching as per user request
+    /*
     useEffect(() => {
         if (allFailed) return;
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -76,6 +77,7 @@ const VideoPlayer = ({ mediaType, tmdbId, data }) => {
             if (timerRef.current) clearTimeout(timerRef.current);
         };
     }, [sourceIndex, iframeKey, allFailed]);
+    */
 
     const handleSourceError = () => {
         if (sourceIndex < sources.length - 1) {
