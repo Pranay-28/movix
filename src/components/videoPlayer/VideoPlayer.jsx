@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { BsFillPlayFill } from "react-icons/bs";
 import { addToHistory } from "../../store/homeSlice";
 import useFetch from "../../hooks/useFetch";
 import ContentWrapper from "../contentWrapper/ContentWrapper";
@@ -29,23 +30,36 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const [iframeKey, setIframeKey] = useState(0);
     const timerRef = useRef(null);
 
-    // Track Watch History
+    // Track Watch History with a 10-second delay
     useEffect(() => {
+        let historyTimer;
         if (data && !loading) {
-            dispatch(
-                addToHistory({
-                    id: tmdbId,
-                    media_type: mediaType,
-                    poster_path: data.poster_path,
-                    title: data.title || data.name,
-                    name: data.name || data.title,
-                    vote_average: data.vote_average,
-                    release_date: data.release_date || data.first_air_date,
-                    genre_ids: data.genres?.map((g) => g.id) || [],
-                })
-            );
+            historyTimer = setTimeout(() => {
+                dispatch(
+                    addToHistory({
+                        id: tmdbId,
+                        media_type: mediaType,
+                        poster_path: data.poster_path,
+                        title: data.title || data.name,
+                        name: data.name || data.title,
+                        vote_average: data.vote_average,
+                        release_date: data.release_date || data.first_air_date,
+                        genre_ids: data.genres?.map((g) => g.id) || [],
+                    })
+                );
+            }, 10000); // Only add to history if viewed for 10+ seconds
         }
+        return () => clearTimeout(historyTimer);
     }, [data, loading, tmdbId, mediaType, dispatch]);
+
+    // Reset state when media changes
+    useEffect(() => {
+        setSourceIndex(0);
+        setAllFailed(false);
+        setSeason(1);
+        setEpisode(1);
+        setIframeKey((k) => k + 1);
+    }, [tmdbId, mediaType]);
     const isTV = mediaType === "tv";
     const sources = isTV ? TV_SOURCES : MOVIE_SOURCES;
 
