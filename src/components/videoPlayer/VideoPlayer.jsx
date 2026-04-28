@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import useFetch from "../../hooks/useFetch";
 import ContentWrapper from "../contentWrapper/ContentWrapper";
 import "./style.scss";
 
@@ -16,7 +17,8 @@ const TV_SOURCES = [
     (id, s, e) => `https://www.2embed.to/embed/tmdb/tv?id=${id}&s=${s}&e=${e}`,
 ];
 
-const VideoPlayer = ({ mediaType, tmdbId, data }) => {
+const VideoPlayer = ({ mediaType, tmdbId }) => {
+    const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
     const [sourceIndex, setSourceIndex] = useState(0);
     const [season, setSeason] = useState(1);
     const [episode, setEpisode] = useState(1);
@@ -99,9 +101,25 @@ const VideoPlayer = ({ mediaType, tmdbId, data }) => {
         setIframeKey((k) => k + 1);
     };
 
-    if (!data) return null;
+    useEffect(() => {
+        console.log("VideoPlayer Mounted/Updated:", { mediaType, tmdbId });
+        return () => console.log("VideoPlayer Unmounted");
+    }, [mediaType, tmdbId]);
 
     const episodeCount = getEpisodeCount();
+
+    if (loading) {
+        return (
+            <div className="videoPlayerSection">
+                <ContentWrapper>
+                    <div className="sectionHeading skeleton" style={{ width: "200px", height: "30px", marginBottom: "20px" }}></div>
+                    <div className="playerWrapper skeleton" style={{ height: "500px", background: "rgba(255,255,255,0.05)" }}></div>
+                </ContentWrapper>
+            </div>
+        );
+    }
+
+    if (!data && !loading) return null;
 
     return (
         <div className="videoPlayerSection">
