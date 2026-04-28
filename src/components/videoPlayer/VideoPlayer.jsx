@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useDispatch } from "react-redux";
+import { addToHistory } from "../../store/homeSlice";
 import useFetch from "../../hooks/useFetch";
 import ContentWrapper from "../contentWrapper/ContentWrapper";
 import "./style.scss";
@@ -18,6 +20,7 @@ const TV_SOURCES = [
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
+    const dispatch = useDispatch();
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
     const [sourceIndex, setSourceIndex] = useState(0);
     const [season, setSeason] = useState(1);
@@ -25,6 +28,24 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const [allFailed, setAllFailed] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
     const timerRef = useRef(null);
+
+    // Track Watch History
+    useEffect(() => {
+        if (data && !loading) {
+            dispatch(
+                addToHistory({
+                    id: tmdbId,
+                    media_type: mediaType,
+                    poster_path: data.poster_path,
+                    title: data.title || data.name,
+                    name: data.name || data.title,
+                    vote_average: data.vote_average,
+                    release_date: data.release_date || data.first_air_date,
+                    genre_ids: data.genres?.map((g) => g.id) || [],
+                })
+            );
+        }
+    }, [data, loading, tmdbId, mediaType, dispatch]);
     const isTV = mediaType === "tv";
     const sources = isTV ? TV_SOURCES : MOVIE_SOURCES;
 

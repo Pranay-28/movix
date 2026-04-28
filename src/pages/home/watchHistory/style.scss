@@ -1,0 +1,40 @@
+@import "../../../mixins.scss";
+
+.watchHistorySection {
+    margin-top: 30px;
+    margin-bottom: 20px;
+
+    .sectionHeader {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 20px;
+        margin-bottom: 20px;
+
+        .carouselTitle {
+            margin-bottom: 0;
+        }
+
+        .clearAllBtn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.5);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+
+            &:hover {
+                border-color: var(--pink);
+                color: var(--pink);
+                background: rgba(218, 47, 133, 0.05);
+            }
+        }
+    }
+
+    .carousel {
+        margin-bottom: 0;
+    }
+}

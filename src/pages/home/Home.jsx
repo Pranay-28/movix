@@ -1,6 +1,7 @@
 // import React from 'react'
 import './style.scss';
 import HeroBanner from './heroBanner/HeroBanner';
+import WatchHistory from './watchHistory/WatchHistory';
 import Trending from './trending/Trending';
 import Popular from './popular/Popular';
 import TopRated from './topRated/TopRated';
@@ -9,10 +10,11 @@ import TopRated from './topRated/TopRated';
 const home = () => {
   return (
     <div>
-      <HeroBanner/>
-      <Trending/>
-      <Popular/>
-      <TopRated/>
+      <HeroBanner />
+      <WatchHistory />
+      <Trending />
+      <Popular />
+      <TopRated />
     </div>
   )
 }
