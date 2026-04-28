@@ -23,10 +23,14 @@ const TV_SOURCES = [
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
     const dispatch = useDispatch();
-    const { url } = useSelector((state) => state.home);
+    const { url, watchHistory } = useSelector((state) => state.home);
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
-    const [season, setSeason] = useState(1);
-    const [episode, setEpisode] = useState(1);
+    
+    // Check for saved progress in history
+    const savedProgress = watchHistory.find((item) => item.id === tmdbId);
+    
+    const [season, setSeason] = useState(savedProgress?.season || 1);
+    const [episode, setEpisode] = useState(savedProgress?.episode || 1);
     
     // Fetch episodes for the selected season
     const { data: seasonData, loading: seasonLoading } = useFetch(
@@ -53,17 +57,25 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                         vote_average: data.vote_average,
                         release_date: data.release_date || data.first_air_date,
                         genre_ids: data.genres?.map((g) => g.id) || [],
+                        season: mediaType === "tv" ? season : undefined,
+                        episode: mediaType === "tv" ? episode : undefined,
                     })
                 );
             }, 10000);
         }
         return () => clearTimeout(historyTimer);
-    }, [data, loading, tmdbId, mediaType, dispatch]);
+    }, [data, loading, tmdbId, mediaType, dispatch, season, episode]);
 
-    // Reset state when media changes
+    // Reset state when media changes (or initialize from history)
     useEffect(() => {
-        setSeason(1);
-        setEpisode(1);
+        const item = watchHistory.find((i) => i.id === tmdbId);
+        if (item && mediaType === "tv") {
+            setSeason(item.season || 1);
+            setEpisode(item.episode || 1);
+        } else {
+            setSeason(1);
+            setEpisode(1);
+        }
         setSourceIndex(0);
         setAllFailed(false);
         setIframeKey((k) => k + 1);
@@ -77,18 +89,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         ? sources[sourceIndex]?.(tmdbId, season, episode)
         : sources[sourceIndex]?.(tmdbId);
 
-    // Reset source index when media changes
-    useEffect(() => {
-        setSourceIndex(0);
-        setAllFailed(false);
-        setSeason(1);
-        setEpisode(1);
-    }, [tmdbId, mediaType]);
 
-    // Reset episode when season changes
-    useEffect(() => {
-        setEpisode(1);
-    }, [season]);
 
     // Reset source index when season/episode changes
     useEffect(() => {
@@ -200,9 +201,10 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                             <div className="seasonSelector">
                                 <select
                                     value={season}
-                                    onChange={(e) =>
-                                        setSeason(Number(e.target.value))
-                                    }
+                                    onChange={(e) => {
+                                        setSeason(Number(e.target.value));
+                                        setEpisode(1);
+                                    }}
                                 >
                                     {data?.seasons
                                         ?.filter((s) => s.season_number > 0)
