@@ -4,6 +4,7 @@ import { BsFillPlayFill } from "react-icons/bs";
 import { addToHistory } from "../../store/homeSlice";
 import useFetch from "../../hooks/useFetch";
 import ContentWrapper from "../contentWrapper/ContentWrapper";
+import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
@@ -22,10 +23,17 @@ const TV_SOURCES = [
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
     const dispatch = useDispatch();
+    const { url } = useSelector((state) => state.home);
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
-    const [sourceIndex, setSourceIndex] = useState(0);
     const [season, setSeason] = useState(1);
     const [episode, setEpisode] = useState(1);
+    
+    // Fetch episodes for the selected season
+    const { data: seasonData, loading: seasonLoading } = useFetch(
+        mediaType === "tv" ? `/tv/${tmdbId}/season/${season}` : null
+    );
+
+    const [sourceIndex, setSourceIndex] = useState(0);
     const [allFailed, setAllFailed] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
     const timerRef = useRef(null);
@@ -47,30 +55,22 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                         genre_ids: data.genres?.map((g) => g.id) || [],
                     })
                 );
-            }, 10000); // Only add to history if viewed for 10+ seconds
+            }, 10000);
         }
         return () => clearTimeout(historyTimer);
     }, [data, loading, tmdbId, mediaType, dispatch]);
 
     // Reset state when media changes
     useEffect(() => {
-        setSourceIndex(0);
-        setAllFailed(false);
         setSeason(1);
         setEpisode(1);
+        setSourceIndex(0);
+        setAllFailed(false);
         setIframeKey((k) => k + 1);
     }, [tmdbId, mediaType]);
+
     const isTV = mediaType === "tv";
     const sources = isTV ? TV_SOURCES : MOVIE_SOURCES;
-
-    // Get episode count for the selected season
-    const getEpisodeCount = useCallback(() => {
-        if (!isTV || !data?.seasons) return 0;
-        const s = data.seasons.find(
-            (item) => item.season_number === season
-        );
-        return s ? s.episode_count : 1;
-    }, [isTV, data, season]);
 
     // Build the current iframe URL
     const currentUrl = isTV
@@ -136,12 +136,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         setIframeKey((k) => k + 1);
     };
 
-    useEffect(() => {
-        console.log("VideoPlayer Mounted/Updated:", { mediaType, tmdbId });
-        return () => console.log("VideoPlayer Unmounted");
-    }, [mediaType, tmdbId]);
 
-    const episodeCount = getEpisodeCount();
 
     if (loading) {
         return (
@@ -160,53 +155,8 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         <div className="videoPlayerSection">
             <ContentWrapper>
                 <div className="sectionHeading">
-                    {isTV ? "Watch Episode" : "Watch Now"}
+                    {isTV ? `Watching: ${data.name} (S${season}E${episode})` : "Watch Now"}
                 </div>
-
-                {isTV && (
-                    <div className="selectorRow">
-                        <div className="selectorGroup">
-                            <label htmlFor="season-select">Season</label>
-                            <select
-                                id="season-select"
-                                value={season}
-                                onChange={(e) =>
-                                    setSeason(Number(e.target.value))
-                                }
-                            >
-                                {data.seasons
-                                    ?.filter((s) => s.season_number > 0)
-                                    .map((s) => (
-                                        <option
-                                            key={s.id}
-                                            value={s.season_number}
-                                        >
-                                            Season {s.season_number}
-                                        </option>
-                                    ))}
-                            </select>
-                        </div>
-                        <div className="selectorGroup">
-                            <label htmlFor="episode-select">Episode</label>
-                            <select
-                                id="episode-select"
-                                value={episode}
-                                onChange={(e) =>
-                                    setEpisode(Number(e.target.value))
-                                }
-                            >
-                                {Array.from(
-                                    { length: episodeCount },
-                                    (_, i) => i + 1
-                                ).map((ep) => (
-                                    <option key={ep} value={ep}>
-                                        Episode {ep}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                )}
 
                 <div className="playerWrapper">
                     {allFailed ? (
@@ -242,6 +192,39 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                         />
                     )}
                 </div>
+
+                {isTV && (
+                    <div className="episodeListSection">
+                        <div className="sectionHeader">
+                            <div className="listHeading">Episodes</div>
+                            <div className="seasonSelector">
+                                <select
+                                    value={season}
+                                    onChange={(e) =>
+                                        setSeason(Number(e.target.value))
+                                    }
+                                >
+                                    {data?.seasons
+                                        ?.filter((s) => s.season_number > 0)
+                                        .map((s) => (
+                                            <option
+                                                key={s.id}
+                                                value={s.season_number}
+                                            >
+                                                Season {s.season_number}
+                                            </option>
+                                        ))}
+                                </select>
+                            </div>
+                        </div>
+                        <EpisodeList
+                            episodes={seasonData?.episodes}
+                            activeEpisode={episode}
+                            onEpisodeChange={(ep) => setEpisode(ep)}
+                            loading={seasonLoading}
+                        />
+                    </div>
+                )}
 
                 <div className="sourceInfo">
                     {!allFailed && (
