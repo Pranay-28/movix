@@ -77,7 +77,15 @@ const DetailsBanner = ({ video, crew }) => {
                                             }}>
                                                 <PlayIcon/>
                                                 <span className="text">
-                                                    Watch Trailer
+                                                    Trailer
+                                                </span>
+                                            </div>
+                                            <div className="playbtn watchNow" onClick={() => {
+                                                document.getElementById("watchNowSection")?.scrollIntoView({ behavior: "smooth" });
+                                            }}>
+                                                <PlayIcon/>
+                                                <span className="text">
+                                                    {mediaType === "tv" ? "Full Series" : "Full Movie"}
                                                 </span>
                                             </div>
                                         </div>
