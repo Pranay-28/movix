@@ -47,7 +47,7 @@ const HeroBanner = () => {
             Welcome.
           </span>
           <span className="subTitle">
-            A passion project by Pranay — because great movies & TV shows should be free to discover.
+            A passion project by Pranay — because great movies & TV shows should be free to watch.
           </span>
           <div className="searchInput">
             <input
