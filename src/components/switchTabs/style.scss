@@ -1,8 +1,9 @@
 .switchingTabs {
     height: 34px;
-    background-color: white;
+    background-color: #1a1a1a;
     border-radius: 20px;
     padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     .tabItems {
         display: flex;
         align-items: center;
@@ -14,7 +15,7 @@
             align-items: center;
             justify-content: center;
             width: 100px;
-            color: var(--black);
+            color: #888888;
             font-size: 14px;
             position: relative;
             z-index: 1;
