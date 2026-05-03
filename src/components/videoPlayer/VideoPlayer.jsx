@@ -8,17 +8,17 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
-    (id) => `https://vidsrc.icu/embed/movie/${id}`,
-    (id) => `https://vidsrc.to/embed/movie/${id}`,
+    (id) => `https://www.2embed.cc/embed/${id}`,        // ← working, try first
     (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
-    (id) => `https://www.2embed.to/embed/tmdb/movie?id=${id}`,
+    (id) => `https://vidcore.net/embed/movie/${id}`,
+    (id) => `https://embed.su/embed/movie/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,  // ← working, try first
     (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
-    (id, s, e) => `https://www.2embed.to/embed/tmdb/tv?id=${id}&s=${s}&e=${e}`,
+    (id, s, e) => `https://vidcore.net/embed/tv/${id}?season=${s}&episode=${e}`,
+    (id, s, e) => `https://embed.su/embed/tv/${id}/${s}/${e}`,
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
