@@ -8,17 +8,17 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
-    (id) => `https://www.2embed.cc/embed/${id}`,        // ← working, try first
+    (id) => `https://player.videasy.net/movie/${id}`,
     (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
-    (id) => `https://vidcore.net/embed/movie/${id}`,
     (id) => `https://embed.su/embed/movie/${id}`,
+    (id) => `https://www.2embed.cc/embed/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,  // ← working, try first
+    (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,  // ✅ working
     (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
-    (id, s, e) => `https://vidcore.net/embed/tv/${id}?season=${s}&episode=${e}`,
     (id, s, e) => `https://embed.su/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
