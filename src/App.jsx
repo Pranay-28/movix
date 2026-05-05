@@ -36,9 +36,9 @@ function App() {
         }
 
         const url = {
-          backdrop: "/api/image/original",
-          poster: "/api/image/original",
-          profile: "/api/image/original",
+          backdrop: window.location.origin + "/api/image/original",
+          poster: window.location.origin + "/api/image/original",
+          profile: window.location.origin + "/api/image/original",
         };
 
         dispatch(getApiConfiguration(url));
