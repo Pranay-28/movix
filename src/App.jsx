@@ -18,34 +18,39 @@ import SearchResult from './pages/searchResult/SearchResult';
 
 function App() {
   const dispatch = useDispatch()
-  const { url } = useSelector((state) => 
-  state.home);
+  const { url } = useSelector((state) =>
+    state.home);
 
 
   useEffect(() => {
     fetchApiConfig();
     genresCall();
   }, []);
- 
+
   const fetchApiConfig = () => {
-    fetchDataFromApi("/configuration").then((res) => {
-      console.log(res);
+    fetchDataFromApi("/configuration")
+      .then((res) => {
+        if (!res || !res.images) {
+          console.error("Failed to fetch API configuration", res);
+          return;
+        }
 
-     const url = {
-       backdrop: res.images.secure_base_url + "original",
-       poster: res.images.secure_base_url + "original",
-       profile: res.images.secure_base_url + "original",
+        const url = {
+          backdrop: "/api/image/original",
+          poster: "/api/image/original",
+          profile: "/api/image/original",
+        };
 
-
-     }
-
-      dispatch(getApiConfiguration(url))
-    });
+        dispatch(getApiConfiguration(url));
+      })
+      .catch((err) => {
+        console.error("API Config error:", err);
+      });
   };
 
   const genresCall = async () => {
-    let promises = [] ;
-    let endPoints = ["tv", "movie"]; 
+    let promises = [];
+    let endPoints = ["tv", "movie"];
     let allGenres = {};
 
     endPoints.forEach((url) => {
@@ -53,25 +58,25 @@ function App() {
     });
 
     const data = await Promise.all(promises);
-    data.map(({genres}) => {
+    data.map(({ genres }) => {
       return genres.map((item) => (allGenres[item.id] = item))
     });
 
     dispatch(getGenres(allGenres));
   };
- 
+
   return (
     <BrowserRouter>
-    <Header/>
+      <Header />
       <Routes>
-        <Route path='/' element={<Home/>}/>
-        <Route path="/:mediaType/:id" element={<Details/>}/>
-        <Route path="/search/:query" element={<SearchResult/>}/>
-        <Route path="/explore/:mediaType" element={<Explore/>}/>
-        <Route path='*' element={<PageNotFound/>}/>
+        <Route path='/' element={<Home />} />
+        <Route path="/:mediaType/:id" element={<Details />} />
+        <Route path="/search/:query" element={<SearchResult />} />
+        <Route path="/explore/:mediaType" element={<Explore />} />
+        <Route path='*' element={<PageNotFound />} />
       </Routes>
-    <Footer/>
-   </BrowserRouter>
+      <Footer />
+    </BrowserRouter>
   )
 }
 
