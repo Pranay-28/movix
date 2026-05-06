@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import dayjs from "dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { BsFillPlayFill } from "react-icons/bs";
 import { addToHistory } from "../../store/homeSlice";
@@ -42,12 +43,13 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const [sourceIndex, setSourceIndex] = useState(0);
     const [allFailed, setAllFailed] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
+    const [startedLoading, setStartedLoading] = useState(false);
     const timerRef = useRef(null);
 
     // Track Watch History with a 10-second delay
     useEffect(() => {
         let historyTimer;
-        if (data && !loading) {
+        if (data && !loading && startedLoading) {
             historyTimer = setTimeout(() => {
                 dispatch(
                     addToHistory({
@@ -66,7 +68,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
             }, 10000);
         }
         return () => clearTimeout(historyTimer);
-    }, [data, loading, tmdbId, mediaType, dispatch, season, episode]);
+    }, [data, loading, startedLoading, tmdbId, mediaType, dispatch, season, episode]);
 
     // Reset state when media changes (or initialize from history)
     useEffect(() => {
@@ -80,6 +82,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         }
         setSourceIndex(0);
         setAllFailed(false);
+        setStartedLoading(false);
         setIframeKey((k) => k + 1);
     }, [tmdbId, mediaType]);
 
@@ -100,24 +103,12 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         setIframeKey((k) => k + 1);
     }, [season, episode]);
 
-    // Fallback timer — Disabled auto-switching as per user request
-    /*
+    // Listen for custom event to start playing (from DetailsBanner button)
     useEffect(() => {
-        if (allFailed) return;
-        if (timerRef.current) clearTimeout(timerRef.current);
-
-        timerRef.current = setTimeout(() => {
-            // Only auto-switch if we haven't reached the end
-            if (sourceIndex < sources.length - 1) {
-                handleSourceError();
-            }
-        }, 5000);
-
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, [sourceIndex, iframeKey, allFailed]);
-    */
+        const handleStartPlay = () => setStartedLoading(true);
+        window.addEventListener("startVideoPlayback", handleStartPlay);
+        return () => window.removeEventListener("startVideoPlayback", handleStartPlay);
+    }, []);
 
     const handleSourceError = () => {
         if (sourceIndex < sources.length - 1) {
@@ -137,6 +128,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         setSourceIndex(0);
         setAllFailed(false);
         setIframeKey((k) => k + 1);
+        setStartedLoading(true);
     };
 
 
@@ -162,37 +154,60 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                 </div>
 
                 <div className="playerWrapper">
-                    {allFailed ? (
-                        <div className="errorMessage">
-                            <span className="errorIcon">⚠️</span>
-                            <p>
-                                All streaming sources are currently
-                                unavailable.
-                            </p>
-                            <button
-                                className="retryBtn"
-                                onClick={handleRetry}
-                            >
-                                Retry
-                            </button>
+                    {!startedLoading ? (
+                        <div
+                            className="playPlaceholder"
+                            onClick={() => setStartedLoading(true)}
+                            style={{
+                                backgroundImage: `url(${url.backdrop + data.backdrop_path})`
+                            }}
+                        >
+                            <div className="overlay"></div>
+                            <div className="playContent">
+                                <div className="playIconWrapper">
+                                    <BsFillPlayFill />
+                                </div>
+                                <span className="playTitle">{data.title || data.name}</span>
+                                <span className="playYear">
+                                    {dayjs(data.release_date || data.first_air_date).format("YYYY")}
+                                </span>
+                            </div>
                         </div>
                     ) : (
-                        <iframe
-                            key={iframeKey}
-                            src={currentUrl}
-                            width="100%"
-                            height="500"
-                            frameBorder="0"
-                            allowFullScreen
-                            allow="autoplay; encrypted-media"
-                            onError={handleSourceError}
-                            onLoad={handleIframeLoad}
-                            title={
-                                isTV
-                                    ? `${data.name || data.title} S${season}E${episode}`
-                                    : data.name || data.title
-                            }
-                        />
+                        <>
+                            {allFailed ? (
+                                <div className="errorMessage">
+                                    <span className="errorIcon">⚠️</span>
+                                    <p>
+                                        All streaming sources are currently
+                                        unavailable.
+                                    </p>
+                                    <button
+                                        className="retryBtn"
+                                        onClick={handleRetry}
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            ) : (
+                                <iframe
+                                    key={iframeKey}
+                                    src={currentUrl}
+                                    width="100%"
+                                    height="500"
+                                    frameBorder="0"
+                                    allowFullScreen
+                                    allow="autoplay; encrypted-media"
+                                    onError={handleSourceError}
+                                    onLoad={handleIframeLoad}
+                                    title={
+                                        isTV
+                                            ? `${data.name || data.title} S${season}E${episode}`
+                                            : data.name || data.title
+                                    }
+                                />
+                            )}
+                        </>
                     )}
                 </div>
 

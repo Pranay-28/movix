@@ -16,14 +16,14 @@ import VideoPopup from "../../../components/videoPopup/VideoPopup";
 
 
 const DetailsBanner = ({ video, crew }) => {
-  const [show, setShow] = useState(false);
-  const [videoId, setVideoId] = useState(null);
+    const [show, setShow] = useState(false);
+    const [videoId, setVideoId] = useState(null);
 
 
     const { mediaType, id } = useParams();
     const { data, loading } = useFetch(`/${mediaType}/${id}`);
 
-    const {url} = useSelector((state) => state.home);
+    const { url } = useSelector((state) => state.home);
 
     const _genres = data?.genres?.map((g) => g.id);
 
@@ -43,20 +43,20 @@ const DetailsBanner = ({ video, crew }) => {
                     {!!data && (
                         <React.Fragment>
                             <div className="backdrop-img">
-                              <Img src={url.backdrop + data.backdrop_path}/>
+                                <Img src={url.backdrop + data.backdrop_path} />
                             </div>
                             <div className="opacity-layer"></div>
                             <ContentWrapper>
                                 <div className="content">
                                     <div className="left">
                                         {data.poster_path ? (
-                                            <Img 
-                                            className="posterImg"
-                                            src={url.backdrop + data.poster_path}/>
-                                        ):(
-                                            <Img 
-                                            className="posterImg"
-                                            src={PosterFallback}/>
+                                            <Img
+                                                className="posterImg"
+                                                src={url.backdrop + data.poster_path} />
+                                        ) : (
+                                            <Img
+                                                className="posterImg"
+                                                src={PosterFallback} />
                                         )}
                                     </div>
                                     <div className="right">
@@ -65,25 +65,26 @@ const DetailsBanner = ({ video, crew }) => {
                                             (${dayjs(data?.release_date).format("YYYY")})`}
                                         </div>
                                         <div className="subtitle">
-                                           {data.tagline}
+                                            {data.tagline}
                                         </div>
-                                        <Genres data={_genres}/>
+                                        <Genres data={_genres} />
 
                                         <div className="row">
-                                            <CircleRating rating={data.vote_average.toFixed(1)}/>
+                                            <CircleRating rating={data.vote_average.toFixed(1)} />
                                             <div className="playbtn" onClick={() => {
                                                 setShow(true)
                                                 setVideoId(video.key)
                                             }}>
-                                                <PlayIcon/>
+                                                <PlayIcon />
                                                 <span className="text">
                                                     Trailer
                                                 </span>
                                             </div>
                                             <div className="playbtn watchNow" onClick={() => {
                                                 document.getElementById("watchNowSection")?.scrollIntoView({ behavior: "smooth" });
+                                                window.dispatchEvent(new CustomEvent("startVideoPlayback"));
                                             }}>
-                                                <PlayIcon/>
+                                                <PlayIcon />
                                                 <span className="text">
                                                     {mediaType === "tv" ? "Full Series" : "Full Movie"}
                                                 </span>
@@ -108,7 +109,7 @@ const DetailsBanner = ({ video, crew }) => {
                                                     </span>
                                                 </div>
                                             )}
-                                            {(data.release_date? data.release_date : data.first_air_date)  && (
+                                            {(data.release_date ? data.release_date : data.first_air_date) && (
                                                 <div className="infoItem">
                                                     <span className="text bold">
                                                         Release Date:{" "}
@@ -119,7 +120,7 @@ const DetailsBanner = ({ video, crew }) => {
                                                         ).format("MMM D, YYYY")}
                                                     </span>
                                                 </div>
-                                            )} 
+                                            )}
                                             {data.runtime && (
                                                 <div className="infoItem">
                                                     <span className="text bold">
@@ -129,9 +130,9 @@ const DetailsBanner = ({ video, crew }) => {
                                                         {toHoursAndMinutes(data.runtime)}
                                                     </span>
                                                 </div>
-                                            )} 
+                                            )}
                                         </div>
-                                        {director?.length>0 && (
+                                        {director?.length > 0 && (
                                             <div className="info">
                                                 <span className="text bold">
                                                     Director:{" "}
@@ -147,7 +148,7 @@ const DetailsBanner = ({ video, crew }) => {
                                             </div>
                                         )}
 
-                                        {writer?.length>0 && (
+                                        {writer?.length > 0 && (
                                             <div className="info">
                                                 <span className="text bold">
                                                     Writer:{" "}
@@ -163,7 +164,7 @@ const DetailsBanner = ({ video, crew }) => {
                                             </div>
                                         )}
 
-                                        {data?.created_by?.length>0 && (
+                                        {data?.created_by?.length > 0 && (
                                             <div className="info">
                                                 <span className="text bold">
                                                     Creator:{" "}
