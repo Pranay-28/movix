@@ -8,30 +8,32 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
+    (id) => `https://vidlink.pro/movie/${id}`,
     (id) => `https://player.videasy.net/movie/${id}`,
-    (id) => `https://vidsrc.me/embed/movie?tmdb=${id}`,
-    (id) => `https://embed.su/embed/movie/${id}`,
-    (id) => `https://www.2embed.cc/embed/${id}`,
+    (id) => `https://vidsrc.to/embed/movie/${id}`,
+    (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
+    (id) => `https://vidsrc.xyz/embed/movie/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,  // ✅ working
-    (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
-    (id, s, e) => `https://embed.su/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+    (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`,
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
     const dispatch = useDispatch();
     const { url, watchHistory } = useSelector((state) => state.home);
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
-    
+
     // Check for saved progress in history
     const savedProgress = watchHistory.find((item) => item.id === tmdbId);
-    
+
     const [season, setSeason] = useState(savedProgress?.season || 1);
     const [episode, setEpisode] = useState(savedProgress?.episode || 1);
-    
+
     // Fetch episodes for the selected season
     const { data: seasonData, loading: seasonLoading } = useFetch(
         mediaType === "tv" ? `/tv/${tmdbId}/season/${season}` : null
@@ -194,6 +196,34 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                     )}
                 </div>
 
+                <div className="sourceInfo">
+                    {!allFailed && (
+                        <span className="sourceIndicator">
+                            Source {sourceIndex + 1} of {sources.length}
+                        </span>
+                    )}
+                    {!allFailed && sourceIndex < sources.length - 1 && (
+                        <button
+                            className="switchBtn"
+                            onClick={handleSourceError}
+                        >
+                            Next Source (Try if not working)
+                        </button>
+                    )}
+                    {!allFailed && sourceIndex > 0 && (
+                        <button
+                            className="switchBtn resetBtn"
+                            onClick={() => {
+                                setSourceIndex(0);
+                                setIframeKey((k) => k + 1);
+                                setAllFailed(false);
+                            }}
+                        >
+                            Reset to Source 1
+                        </button>
+                    )}
+                </div>
+
                 {isTV && (
                     <div className="episodeListSection">
                         <div className="sectionHeader">
@@ -227,34 +257,6 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                         />
                     </div>
                 )}
-
-                <div className="sourceInfo">
-                    {!allFailed && (
-                        <span className="sourceIndicator">
-                            Source {sourceIndex + 1} of {sources.length}
-                        </span>
-                    )}
-                    {!allFailed && sourceIndex < sources.length - 1 && (
-                        <button
-                            className="switchBtn"
-                            onClick={handleSourceError}
-                        >
-                            Next Source (Try if not working)
-                        </button>
-                    )}
-                    {!allFailed && sourceIndex > 0 && (
-                        <button
-                            className="switchBtn"
-                            onClick={() => {
-                                setSourceIndex(0);
-                                setIframeKey((k) => k + 1);
-                                setAllFailed(false);
-                            }}
-                        >
-                            Reset to Source 1
-                        </button>
-                    )}
-                </div>
             </ContentWrapper>
         </div>
     );
