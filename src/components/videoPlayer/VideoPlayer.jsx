@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import dayjs from "dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { BsFillPlayFill } from "react-icons/bs";
@@ -9,16 +9,16 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
-    (id) => `https://vidlink.pro/movie/${id}`,
     (id) => `https://player.videasy.net/movie/${id}`,
+    (id) => `https://vidlink.pro/movie/${id}`,
     (id) => `https://vidsrc.to/embed/movie/${id}`,
     (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
     (id) => `https://vidsrc.xyz/embed/movie/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`,
@@ -42,6 +42,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
 
     const [sourceIndex, setSourceIndex] = useState(0);
     const [allFailed, setAllFailed] = useState(false);
+    const [showPlayButton, setShowPlayButton] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
     const [startedLoading, setStartedLoading] = useState(false);
     const timerRef = useRef(null);
@@ -82,6 +83,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         }
         setSourceIndex(0);
         setAllFailed(false);
+        setShowPlayButton(false);
         setStartedLoading(false);
         setIframeKey((k) => k + 1);
     }, [tmdbId, mediaType]);
@@ -100,19 +102,38 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     useEffect(() => {
         setSourceIndex(0);
         setAllFailed(false);
+        setShowPlayButton(false);
         setIframeKey((k) => k + 1);
     }, [season, episode]);
 
     // Listen for custom event to start playing (from DetailsBanner button)
     useEffect(() => {
-        const handleStartPlay = () => setStartedLoading(true);
+        const handleStartPlay = () => {
+            // Only show play button if sourceIndex is 1 (Source 2 - vidlink.pro)
+            if (sourceIndex === 1) {
+                setShowPlayButton(true);
+                setStartedLoading(true);
+            } else {
+                // For other sources, just start loading directly
+                setStartedLoading(true);
+            }
+        };
         window.addEventListener("startVideoPlayback", handleStartPlay);
         return () => window.removeEventListener("startVideoPlayback", handleStartPlay);
-    }, []);
+    }, [sourceIndex]);
 
     const handleSourceError = () => {
         if (sourceIndex < sources.length - 1) {
-            setSourceIndex((prev) => prev + 1);
+            const newIndex = sourceIndex + 1;
+            setSourceIndex(newIndex);
+            // Show play button only when switching to Source 2 (index 1)
+            if (newIndex === 1) {
+                setShowPlayButton(true);
+                setStartedLoading(false);
+            } else {
+                setShowPlayButton(false);
+                setStartedLoading(true);
+            }
             setIframeKey((k) => k + 1);
         } else {
             setAllFailed(true);
@@ -127,6 +148,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const handleRetry = () => {
         setSourceIndex(0);
         setAllFailed(false);
+        setShowPlayButton(false);
         setIframeKey((k) => k + 1);
         setStartedLoading(true);
     };
@@ -154,10 +176,13 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                 </div>
 
                 <div className="playerWrapper">
-                    {!startedLoading ? (
+                    {showPlayButton ? (
                         <div
                             className="playPlaceholder"
-                            onClick={() => setStartedLoading(true)}
+                            onClick={() => {
+                                setShowPlayButton(false);
+                                setStartedLoading(true);
+                            }}
                             style={{
                                 backgroundImage: `url(${url.backdrop + data.backdrop_path})`
                             }}
@@ -230,8 +255,10 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                             className="switchBtn resetBtn"
                             onClick={() => {
                                 setSourceIndex(0);
+                                setShowPlayButton(false);
                                 setIframeKey((k) => k + 1);
                                 setAllFailed(false);
+                                setStartedLoading(true);
                             }}
                         >
                             Reset to Source 1
