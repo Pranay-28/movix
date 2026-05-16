@@ -26,24 +26,34 @@ function App() {
 
   const fetchWatchHistory = async (userId) => {
     if (!supabase) return;
-    const { data, error } = await supabase
+      const { data, error } = await supabase
         .from('watch_history')
         .select('*')
         .eq('user_id', userId)
         .order('last_watched_at', { ascending: false });
 
-    if (!error && data) {
-        const formattedHistory = data.map(item => ({
-            id: item.tmdb_id,
-            media_type: item.media_type,
-            title: item.title,
-            season: item.season,
-            episode: item.episode,
-            poster_path: item.poster_path,
-            vote_average: item.vote_average || 0,
-            release_date: item.release_date,
-            genre_ids: item.genre_ids || [],
-        }));
+      if (error) {
+        console.error("Error fetching history:", error);
+      } else {
+        // De-duplicate on the fly to handle legacy DB issues
+        const seenIds = new Set();
+        const formattedHistory = data.reduce((acc, item) => {
+          if (!seenIds.has(Number(item.tmdb_id))) {
+            seenIds.add(Number(item.tmdb_id));
+            acc.push({
+              id: item.tmdb_id,
+              media_type: item.media_type,
+              title: item.title,
+              season: item.season,
+              episode: item.episode,
+              poster_path: item.poster_path,
+              vote_average: item.vote_average || 0,
+              release_date: item.release_date,
+              genre_ids: item.genre_ids || [],
+            });
+          }
+          return acc;
+        }, []);
         dispatch(setWatchHistory(formattedHistory));
     }
   };
