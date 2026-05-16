@@ -189,7 +189,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
 
     const { user } = useSelector((state) => state.home);
     const [authBlocked, setAuthBlocked] = useState(false);
-    
+
     // Initialize watchTime from localStorage to prevent refresh loophole
     const [watchTime, setWatchTime] = useState(() => {
         if (user) return 0;
@@ -214,8 +214,8 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                 setWatchTime((prev) => {
                     const nextTime = prev + 1;
                     localStorage.setItem(`movix_watch_time_${tmdbId}`, nextTime.toString());
-                    
-                    if (nextTime >= 2 * 60) { // 2 minutes (Changed for testing)
+
+                    if (nextTime >= 35 * 60) { // 2 minutes (Changed for testing)
                         setAuthBlocked(true);
                         clearInterval(timer);
                     }
@@ -245,7 +245,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                         episode: mediaType === "tv" ? episode : null,
                         last_watched_at: new Date().toISOString(),
                     }, { onConflict: 'user_id, tmdb_id' });
-                
+
                 if (error) console.error("Sync Error:", error);
                 else console.log("Progress Synced to Supabase");
             }
@@ -254,7 +254,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         // Initial sync after 10s of watching, then every 30s
         const initialDelay = setTimeout(saveProgress, 10000);
         const interval = setInterval(saveProgress, 30000);
-        
+
         return () => {
             clearTimeout(initialDelay);
             clearInterval(interval);
@@ -285,7 +285,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                     {isTV ? `Watching: ${data.name} (S${season}E${episode})` : "Watch Now"}
                 </div>
 
-                <div 
+                <div
                     className="playerWrapper"
                     style={{
                         backgroundImage: authBlocked ? `url(${url.backdrop + data?.backdrop_path})` : 'none',
@@ -356,7 +356,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                     )}
 
                     {/* Show AuthOverlay on top if blocked */}
-                    <AuthOverlay 
+                    <AuthOverlay
                         mediaType={mediaType}
                         authBlocked={authBlocked}
                         setAuthBlocked={setAuthBlocked}
@@ -440,7 +440,7 @@ export default VideoPlayer;
 
 const AuthOverlay = ({ mediaType, authBlocked, setAuthBlocked, season, episode, tmdbId, navigate, location }) => {
     if (!authBlocked) return null;
-    
+
     return (
         <div className="authOverlay">
             <div className="overlayContent">
