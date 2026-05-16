@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { HiOutlineSearch, HiOutlineUserCircle } from "react-icons/hi";
 import { SlMenu } from "react-icons/sl";
 import { VscChromeClose } from "react-icons/vsc";
+import { MdOutlineSwitchAccount } from "react-icons/md";
+import { FiLogOut } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { supabase } from "../../utils/supabaseClient";
@@ -82,6 +84,24 @@ const Header = () => {
     setMobileMenu(false);
   };
 
+  const renderAccountMenu = () => (
+    <ul className="accountDropdown">
+      <li className="userInfo">
+        <span className="userName">{user?.user_metadata?.full_name || 'User'}</span>
+        <span className="userEmail">{user?.email}</span>
+      </li>
+      <li className="divider"></li>
+      <li onClick={() => { navigate("/login"); setShowAccountMenu(false); }}>
+        <MdOutlineSwitchAccount className="menuIcon" />
+        <span>Change Account</span>
+      </li>
+      <li onClick={() => { handleLogout(); setShowAccountMenu(false); }}>
+        <FiLogOut className="menuIcon" />
+        <span>Logout</span>
+      </li>
+    </ul>
+  );
+
   return (
     <header className={`header ${mobileMenu ? "mobileView" : ""} ${show}`}>
       <ContentWrapper>
@@ -115,15 +135,13 @@ const Header = () => {
                 )}
               </div>
               {showAccountMenu && (
-                <ul className="accountDropdown">
-                  <li className="userInfo">
-                    <span className="userName">{user?.user_metadata?.full_name || 'User'}</span>
-                    <span className="userEmail">{user?.email}</span>
-                  </li>
-                  <li className="divider"></li>
-                  <li onClick={() => navigate("/login")}>Change Account</li>
-                  <li onClick={handleLogout}>Logout</li>
-                </ul>
+                <>
+                  <div className="accountBackdrop" onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAccountMenu(false);
+                  }}></div>
+                  {renderAccountMenu()}
+                </>
               )}
             </li>
           ) : (
@@ -139,14 +157,22 @@ const Header = () => {
         <div className="mobileMenuItems">
           <HiOutlineSearch onClick={openSearch} />
           {user ? (
-            <div className="mobileAvatar" onClick={() => navigate("/login")}>
-              {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
-                <img 
-                  src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} 
-                  alt="profile" 
-                />
-              ) : (
-                <HiOutlineUserCircle />
+            <div className="mobileAccountWrapper">
+              <div className="mobileAvatar" onClick={() => setShowAccountMenu(!showAccountMenu)}>
+                {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                  <img 
+                    src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} 
+                    alt="profile" 
+                  />
+                ) : (
+                  <HiOutlineUserCircle />
+                )}
+              </div>
+              {showAccountMenu && (
+                <>
+                  <div className="accountBackdrop" onClick={() => setShowAccountMenu(false)}></div>
+                  {renderAccountMenu()}
+                </>
               )}
             </div>
           ) : (

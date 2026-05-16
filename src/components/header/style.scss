@@ -31,6 +31,17 @@
         justify-content: space-between;
     }
 
+    .accountBackdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 90;
+        background: transparent;
+        cursor: default;
+    }
+
     .logo {
         display: flex;
         align-items: center;
@@ -136,55 +147,74 @@
                     top: 60px;
                     right: -15px;
                     background: rgba(18, 18, 18, 0.95);
-                    backdrop-filter: blur(15px);
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
                     list-style: none;
-                    padding: 8px 0;
+                    padding: 10px 0;
                     border-radius: 12px;
-                    min-width: 200px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    min-width: 220px;
+                    box-shadow: 0 15px 50px rgba(0,0,0,0.8);
                     border: 1px solid rgba(255, 255, 255, 0.1);
-                    animation: fadeIn 0.2s ease;
+                    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     overflow: hidden;
+                    z-index: 100;
 
                     .userInfo {
-                        padding: 15px 20px;
+                        padding: 18px 22px;
                         display: flex;
                         flex-direction: column;
-                        gap: 2px;
-                        pointer-events: none;
+                        gap: 6px;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                        margin-bottom: 8px;
+                        align-items: flex-start;
 
                         .userName {
-                            font-size: 15px;
-                            font-weight: 600;
+                            display: block; // Force new line
+                            font-size: 16px;
+                            font-weight: 700;
                             color: white;
+                            line-height: 1.2;
                         }
 
                         .userEmail {
-                            font-size: 12px;
+                            display: block; // Force new line
+                            font-size: 13px;
                             color: rgba(255, 255, 255, 0.5);
+                            word-break: break-all; // Prevent overflow on narrow screens
                         }
                     }
 
                     .divider {
-                        height: 1px;
-                        background: rgba(255, 255, 255, 0.1);
-                        margin: 4px 0;
-                        padding: 0;
+                        display: none;
                     }
 
                     li:not(.userInfo):not(.divider) {
-                        padding: 12px 20px;
-                        color: rgba(255, 255, 255, 0.8);
+                        padding: 14px 22px;
+                        color: rgba(255, 255, 255, 0.85);
                         font-size: 14px;
-                        white-space: nowrap;
-                        transition: all 0.2s;
-                        display: block;
-                        width: 100%;
+                        font-weight: 500;
+                        display: flex;
+                        align-items: center;
+                        gap: 15px; // Better gap between icon and text
+                        transition: all 0.25s ease;
+                        cursor: pointer;
+
+                        .menuIcon {
+                            font-size: 22px;
+                            color: var(--pink);
+                            width: 24px; // Fixed width for consistent alignment
+                            display: flex;
+                            justify-content: center;
+                        }
+
+                        span {
+                            margin-top: 1px; // Fine-tune vertical alignment
+                        }
 
                         &:hover {
                             background: rgba(255, 255, 255, 0.08);
                             color: white;
-                            padding-left: 24px;
+                            padding-left: 28px;
                         }
                     }
                 }
@@ -209,6 +239,81 @@
             font-size: 20px;
             color: white;
             cursor: pointer;
+        }
+
+        .mobileAccountWrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+
+            .accountDropdown {
+                position: fixed;
+                top: 70px !important;
+                right: 20px !important;
+                left: 20px !important;
+                min-width: unset !important;
+                width: auto !important;
+                background: rgba(15, 15, 15, 0.98) !important;
+                backdrop-filter: blur(30px) !important;
+                -webkit-backdrop-filter: blur(30px) !important;
+                border-radius: 16px !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9) !important;
+                z-index: 1000;
+                padding: 5px 0 !important;
+
+                .userInfo {
+                    padding: 22px 25px !important;
+                    background: rgba(255, 255, 255, 0.04);
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    margin-bottom: 10px !important;
+                    
+                    .userName {
+                        font-size: 19px !important;
+                        font-weight: 700 !important;
+                        color: #ffffff !important;
+                        line-height: 1.2 !important;
+                        display: block !important;
+                    }
+
+                    .userEmail {
+                        font-size: 14px !important;
+                        color: rgba(255, 255, 255, 0.6) !important;
+                        word-break: break-all !important;
+                        display: block !important;
+                        font-weight: 400 !important;
+                    }
+                }
+
+                li:not(.userInfo):not(.divider) {
+                    padding: 18px 25px !important;
+                    font-size: 16px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 15px !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    .menuIcon {
+                        font-size: 24px !important;
+                        color: var(--pink);
+                        width: 28px !important;
+                        display: flex !important;
+                        justify-content: center !important;
+                    }
+
+                    span {
+                        color: white !important;
+                        font-weight: 500;
+                    }
+                }
+            }
         }
 
         .mobileAvatar {

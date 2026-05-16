@@ -2,7 +2,7 @@
 
 .watchHistorySection {
     margin-top: 30px;
-    margin-bottom: 20px;
+    // margin-bottom removed to inherit standard 70px from .carouselSection
 
     .sectionHeader {
         display: flex;
