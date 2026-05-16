@@ -20,7 +20,7 @@ const Details = () => {
     <div>
       <DetailsBanner video={data?.results[0]} crew={credits?.crew} />
       <div id="watchNowSection">
-        <VideoPlayer mediaType={mediaType} tmdbId={id} />
+        <VideoPlayer mediaType={mediaType} tmdbId={id} key={id} />
       </div>
       <Cast data={credits?.cast} loading={creditsLoading} />
       <VideosSection data={data} loading={loading} />

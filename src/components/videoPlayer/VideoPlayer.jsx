@@ -39,7 +39,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         if (stored) {
             const parsed = JSON.parse(stored);
             // Check if state is fresh (last 10 mins)
-            if (Date.now() - parsed.ts < 600000 && parsed.tmdbId === tmdbId) {
+            if (Date.now() - parsed.ts < 600000 && parsed.tmdbId == tmdbId) {
                 localStorage.removeItem("movix_redirect_state");
                 return parsed;
             }
@@ -47,18 +47,46 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         return null;
     })();
 
-    const savedProgress = watchHistory.find((item) => item.id === tmdbId);
+    const numericId = Number(tmdbId);
 
-    const [season, setSeason] = useState(
-        redirectState?.season || savedProgress?.season || 1
-    );
-    const [episode, setEpisode] = useState(
-        redirectState?.episode || savedProgress?.episode || 1
-    );
+    // Default states
+    const [season, setSeason] = useState(1);
+    const [episode, setEpisode] = useState(1);
+
+    // Track the current series to detect changes during render
+    const [activeId, setActiveId] = useState(numericId);
+
+    // Ultra-strict: If ID changed, immediately force state to match its own history or 1
+    if (activeId !== numericId) {
+        const item = watchHistory.find((i) => Number(i.id) === numericId);
+        const rState = (redirectState && Number(redirectState.tmdbId) === numericId) ? redirectState : null;
+        
+        setSeason(rState?.season || item?.season || 1);
+        setEpisode(rState?.episode || item?.episode || 1);
+        setActiveId(numericId);
+        
+        // Full UI state reset for the new series
+        setSourceIndex(0);
+        setAllFailed(false);
+        setShowPlayButton(false);
+        setStartedLoading(false);
+        setIframeKey((k) => k + 1);
+    }
+
+    // Secondary Sync: Handle cloud history arrivals (when length changes)
+    useEffect(() => {
+        const item = watchHistory.find((i) => Number(i.id) === numericId);
+        // Only update if we are not already watching a specific episode (prevents jump during watch)
+        // Actually, for a fresh series, we should always try to restore once
+        if (item) {
+            setSeason(prev => (prev === 1 ? (item.season || 1) : prev));
+            setEpisode(prev => (prev === 1 ? (item.episode || 1) : prev));
+        }
+    }, [watchHistory.length, numericId]);
 
     // Fetch episodes for the selected season
     const { data: seasonData, loading: seasonLoading } = useFetch(
-        mediaType === "tv" ? `/tv/${tmdbId}/season/${season}` : null
+        mediaType === "tv" ? `/tv/${numericId}/season/${season}` : null
     );
 
     const [sourceIndex, setSourceIndex] = useState(0);
@@ -75,7 +103,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
             historyTimer = setTimeout(() => {
                 dispatch(
                     addToHistory({
-                        id: tmdbId,
+                        id: numericId,
                         media_type: mediaType,
                         poster_path: data.poster_path,
                         title: data.title || data.name,
@@ -90,34 +118,9 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
             }, 10000);
         }
         return () => clearTimeout(historyTimer);
-    }, [data, loading, startedLoading, tmdbId, mediaType, dispatch, season, episode]);
+    }, [data, loading, startedLoading, numericId, mediaType, dispatch, season, episode]);
 
     const isRedirectApplied = useRef(!!redirectState);
-
-    const hasAttemptedRestore = useRef(null);
-
-    // Initial Reset when movie changes
-    useEffect(() => {
-        setSourceIndex(0);
-        setAllFailed(false);
-        setShowPlayButton(false);
-        setStartedLoading(false);
-        setIframeKey((k) => k + 1);
-        hasAttemptedRestore.current = null; // Allow a new restore check
-    }, [tmdbId, mediaType]);
-
-    // Restore from History (Both local and Cloud arrival)
-    useEffect(() => {
-        // Only attempt restore if we haven't successfully restored for this ID yet
-        if (hasAttemptedRestore.current === tmdbId) return;
-
-        const item = watchHistory.find((i) => i.id === tmdbId);
-        if (item && mediaType === "tv") {
-            setSeason(item.season || 1);
-            setEpisode(item.episode || 1);
-            hasAttemptedRestore.current = tmdbId;
-        }
-    }, [watchHistory, tmdbId, mediaType]);
 
     const isTV = mediaType === "tv";
     const sources = isTV ? TV_SOURCES : MOVIE_SOURCES;
