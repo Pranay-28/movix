@@ -6,7 +6,7 @@ import { fetchDataFromApi } from './utils/api';
 
 import { useSelector, useDispatch } from 'react-redux';
 
-import { getApiConfiguration, getGenres, setUser, setSession, setWatchHistory } from './store/homeSlice';
+import { getApiConfiguration, getGenres, setUser, setSession, setWatchHistory, setWatchLater } from './store/homeSlice';
 import { supabase } from './utils/supabaseClient';
 
 import Footer from './components/footer/Footer';
@@ -48,6 +48,28 @@ function App() {
     }
   };
 
+  const fetchWatchLater = async (userId) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from('watch_later')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (!error && data) {
+        const formattedLater = data.map(item => ({
+            id: item.tmdb_id,
+            media_type: item.media_type,
+            title: item.title,
+            poster_path: item.poster_path,
+            vote_average: item.vote_average || 0,
+            release_date: item.release_date,
+            genre_ids: item.genre_ids || [],
+        }));
+        dispatch(setWatchLater(formattedLater));
+    }
+  };
+
 
   useEffect(() => {
     fetchApiConfig();
@@ -58,14 +80,22 @@ function App() {
       supabase.auth.getSession().then(({ data: { session } }) => {
         dispatch(setSession(session));
         dispatch(setUser(session?.user ?? null));
-        if (session?.user) fetchWatchHistory(session.user.id);
+        if (session?.user) {
+          fetchWatchHistory(session.user.id);
+          fetchWatchLater(session.user.id);
+        }
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         dispatch(setSession(session));
         dispatch(setUser(session?.user ?? null));
-        if (session?.user) fetchWatchHistory(session.user.id);
-        else dispatch(setWatchHistory([])); // Clear history on logout
+        if (session?.user) {
+          fetchWatchHistory(session.user.id);
+          fetchWatchLater(session.user.id);
+        } else {
+          dispatch(setWatchHistory([]));
+          dispatch(setWatchLater([]));
+        }
       });
 
       return () => subscription.unsubscribe();

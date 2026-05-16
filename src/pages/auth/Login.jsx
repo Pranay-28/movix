@@ -66,8 +66,17 @@ const Login = () => {
                     </button>
                     <div className="authHeader">
                         <span className="logo">MOVIX</span>
-                        <h2>Welcome Back</h2>
-                        <p>Login to continue watching and sync your progress on any device.</p>
+                        {location.state?.watchLaterPrompt ? (
+                            <>
+                                <h2>Save for Later</h2>
+                                <p>To save movies and TV shows, you need to login. It's free!</p>
+                            </>
+                        ) : (
+                            <>
+                                <h2>Welcome Back</h2>
+                                <p>Login to continue watching and sync your progress on any device.</p>
+                            </>
+                        )}
                     </div>
 
                     {error && <div className="errorMessage">{error}</div>}

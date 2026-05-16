@@ -109,80 +109,6 @@
                     fill: white;
                 }
             }
-            .playbtn {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-
-                svg {
-                    width: 50px;
-                    @include md {
-                        width: 70px;
-                    }
-                    @include lg {
-                        width: 80px;
-                    }
-                }
-                .text {
-                    font-size: 11px;
-                    font-weight: 600;
-                    transition: all 0.7s ease-in-out;
-                    white-space: nowrap;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    
-                    @include md {
-                        font-size: 14px;
-                    }
-                    @include lg {
-                        font-size: 16px;
-                    }
-                }
-                .triangle {
-                    stroke-dasharray: 240;
-                    stroke-dashoffset: 480;
-                    stroke: white;
-                    transform: translateY(0);
-                    transition: all 0.7s ease-in-out;
-                }
-                .circle {
-                    stroke: white;
-                    stroke-dasharray: 650;
-                    stroke-dashoffset: 1300;
-                    transition: all 0.5s ease-in-out;
-                }
-                &:hover {
-                    .text {
-                        color: #ffffff;
-                        transform: scale(1.05);
-                    }
-                    .triangle {
-                        stroke-dashoffset: 0;
-                        opacity: 1;
-                        stroke: #ffffff;
-                        animation: trailorPlay 0.7s ease-in-out;
-                    }
-                    .circle {
-                        stroke-dashoffset: 0;
-                        stroke: #ffffff;
-                    }
-                }
-
-                &.watchNow {
-                    .circle {
-                        fill: rgba(255, 255, 255, 0.05);
-                    }
-                    &:hover {
-                        .circle {
-                            fill: rgba(255, 255, 255, 0.15);
-                        }
-                    }
-                }
-            }
-
             .row {
                 display: flex;
                 align-items: flex-start;
@@ -192,6 +118,128 @@
 
                 @include md {
                     gap: 30px;
+                }
+
+                .circleRating {
+                    align-self: flex-start;
+                    margin-top: 5px;
+                    @include md {
+                        margin-top: 10px;
+                    }
+                }
+
+                .playbtn, .bookmarkBtn {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 5px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+
+                    .iconContainer {
+                        height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        @include md {
+                            height: 70px;
+                        }
+                        @include lg {
+                            height: 80px;
+                        }
+                    }
+
+                    .text {
+                        font-size: 11px;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        white-space: nowrap;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        
+                        @include md {
+                            font-size: 14px;
+                        }
+                        @include lg {
+                            font-size: 16px;
+                        }
+                    }
+
+                    &:hover {
+                        transform: translateY(-5px);
+                        .text {
+                            color: #ffffff;
+                        }
+                    }
+                }
+
+                .playbtn {
+                    svg {
+                        width: 50px;
+                        @include md { width: 70px; }
+                        @include lg { width: 80px; }
+                    }
+                    .triangle {
+                        stroke-dasharray: 240;
+                        stroke-dashoffset: 480;
+                        stroke: white;
+                        transition: all 0.7s ease-in-out;
+                    }
+                    .circle {
+                        stroke: white;
+                        stroke-dasharray: 650;
+                        stroke-dashoffset: 1300;
+                        transition: all 0.5s ease-in-out;
+                    }
+
+                    &:hover {
+                        .triangle {
+                            stroke-dashoffset: 0;
+                            opacity: 1;
+                            animation: trailorPlay 0.7s ease-in-out;
+                        }
+                        .circle {
+                            stroke-dashoffset: 0;
+                        }
+                    }
+
+                    &.watchNow {
+                        .circle {
+                            fill: rgba(255, 255, 255, 0.05);
+                        }
+                        &:hover {
+                            .circle {
+                                fill: rgba(255, 255, 255, 0.15);
+                            }
+                        }
+                    }
+                }
+
+                .bookmarkBtn {
+                    .icon {
+                        font-size: 30px;
+                        color: white;
+                        transition: all 0.3s ease;
+
+                        @include md { font-size: 40px; }
+                        @include lg { font-size: 45px; }
+
+                        &.filled {
+                            color: #ffffff;
+                            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+                        }
+                    }
+
+                    &:hover {
+                        .icon:not(.filled) {
+                            color: rgba(255, 255, 255, 0.8);
+                        }
+                    }
+
+                    &:active {
+                        transform: scale(0.9);
+                    }
                 }
             }
 
@@ -214,6 +262,76 @@
                     }
                 }
             }
+        }
+    }
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(18, 18, 18, 0.95);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 12px 25px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        z-index: 9999;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        animation: toastFadeInMobile 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        white-space: nowrap;
+
+        @include md {
+            bottom: 50px;
+            right: 50px;
+            left: auto;
+            transform: none;
+            animation: toastFadeInDesktop 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .toastMsg {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toastClose {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+
+            &:hover {
+                color: white;
+            }
+        }
+    }
+
+    @keyframes toastFadeInMobile {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
+    @keyframes toastFadeInDesktop {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
@@ -258,4 +376,4 @@
             }
         }
     }
-}
+}

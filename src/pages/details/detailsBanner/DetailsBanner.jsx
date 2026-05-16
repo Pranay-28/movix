@@ -13,17 +13,82 @@ import Img from "../../../components/lazyLoadImg/Img.jsx";
 import PosterFallback from "../../../assets/no-poster.png";
 import { PlayIcon } from "../Playbtn";
 import VideoPopup from "../../../components/videoPopup/VideoPopup";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
+import { useDispatch } from "react-redux";
+import { addToWatchLater, removeFromWatchLater } from "../../../store/homeSlice";
+import { supabase } from "../../../utils/supabaseClient";
+import { useNavigate, useLocation } from "react-router-dom";
+import { VscChromeClose } from "react-icons/vsc";
 
 
 const DetailsBanner = ({ video, crew }) => {
     const [show, setShow] = useState(false);
     const [videoId, setVideoId] = useState(null);
+    const [toast, setToast] = useState({ show: false, message: "" });
 
 
     const { mediaType, id } = useParams();
     const { data, loading } = useFetch(`/${mediaType}/${id}`);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const { url } = useSelector((state) => state.home);
+    const { url, user, watchLater } = useSelector((state) => state.home);
+
+    const isSaved = watchLater?.some((item) => item.id === id);
+
+    const handleWatchLater = async () => {
+        if (!user) {
+            navigate("/login", { 
+                state: { 
+                    from: location, 
+                    watchLaterPrompt: true 
+                } 
+            });
+            return;
+        }
+
+        if (isSaved) {
+            dispatch(removeFromWatchLater(id));
+            setToast({ show: true, message: "Removed from Watch Later" });
+            if (supabase) {
+                await supabase
+                    .from('watch_later')
+                    .delete()
+                    .eq('tmdb_id', id)
+                    .eq('user_id', user.id);
+            }
+        } else {
+            const newItem = {
+                id: id,
+                media_type: mediaType,
+                title: data.name || data.title,
+                poster_path: data.poster_path,
+                vote_average: data.vote_average || 0,
+                release_date: data.release_date || data.first_air_date,
+                genre_ids: data.genres?.map(g => g.id) || [],
+            };
+            dispatch(addToWatchLater(newItem));
+            setToast({ show: true, message: "Added to Watch Later!" });
+            if (supabase) {
+                await supabase
+                    .from('watch_later')
+                    .insert({
+                        user_id: user.id,
+                        tmdb_id: id,
+                        media_type: mediaType,
+                        title: data.name || data.title,
+                        poster_path: data.poster_path,
+                        vote_average: data.vote_average,
+                        release_date: data.release_date || data.first_air_date,
+                        genre_ids: data.genres?.map(g => g.id),
+                    });
+            }
+        }
+        
+        // Auto-hide toast after 3 seconds
+        setTimeout(() => setToast({ show: false, message: "" }), 3000);
+    };
 
     const _genres = data?.genres?.map((g) => g.id);
 
@@ -75,7 +140,9 @@ const DetailsBanner = ({ video, crew }) => {
                                                 setShow(true)
                                                 setVideoId(video.key)
                                             }}>
-                                                <PlayIcon />
+                                                <div className="iconContainer">
+                                                    <PlayIcon />
+                                                </div>
                                                 <span className="text">
                                                     Trailer
                                                 </span>
@@ -84,9 +151,23 @@ const DetailsBanner = ({ video, crew }) => {
                                                 document.getElementById("watchNowSection")?.scrollIntoView({ behavior: "smooth" });
                                                 window.dispatchEvent(new CustomEvent("startVideoPlayback"));
                                             }}>
-                                                <PlayIcon />
+                                                <div className="iconContainer">
+                                                    <PlayIcon />
+                                                </div>
                                                 <span className="text">
                                                     {mediaType === "tv" ? "Full Series" : "Full Movie"}
+                                                </span>
+                                            </div>
+                                            <div className="bookmarkBtn" onClick={handleWatchLater}>
+                                                <div className="iconContainer">
+                                                    {isSaved ? (
+                                                        <BsBookmarkFill className="icon filled" />
+                                                    ) : (
+                                                        <BsBookmark className="icon" />
+                                                    )}
+                                                </div>
+                                                <span className="text">
+                                                    {isSaved ? "Saved" : "Watch Later"}
                                                 </span>
                                             </div>
                                         </div>
@@ -189,6 +270,14 @@ const DetailsBanner = ({ video, crew }) => {
                                 />
                             </ContentWrapper>
                         </React.Fragment>
+                    )}
+                    {toast.show && (
+                        <div className="toast">
+                            <span className="toastMsg">{toast.message}</span>
+                            <button className="toastClose" onClick={() => setToast({ show: false, message: "" })}>
+                                <VscChromeClose />
+                            </button>
+                        </div>
                     )}
                 </>
             ) : (

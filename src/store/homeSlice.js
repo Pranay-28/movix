@@ -6,6 +6,7 @@ export const homeSlice = createSlice({
         url: {},
         genres: {},
         watchHistory: JSON.parse(localStorage.getItem("watchHistory")) || [],
+        watchLater: JSON.parse(localStorage.getItem("watchLater")) || [],
         user: null,
         session: null,
     },
@@ -53,6 +54,25 @@ export const homeSlice = createSlice({
             state.watchHistory = action.payload;
             localStorage.setItem("watchHistory", JSON.stringify(action.payload));
         },
+        setWatchLater: (state, action) => {
+            state.watchLater = action.payload;
+            localStorage.setItem("watchLater", JSON.stringify(action.payload));
+        },
+        addToWatchLater: (state, action) => {
+            const newItem = action.payload;
+            // Avoid duplicates
+            if (!state.watchLater.find(item => item.id === newItem.id)) {
+                const updatedList = [newItem, ...state.watchLater];
+                state.watchLater = updatedList;
+                localStorage.setItem("watchLater", JSON.stringify(updatedList));
+            }
+        },
+        removeFromWatchLater: (state, action) => {
+            const id = action.payload;
+            const updatedList = state.watchLater.filter(item => item.id !== id);
+            state.watchLater = updatedList;
+            localStorage.setItem("watchLater", JSON.stringify(updatedList));
+        }
     },
 });
 
@@ -65,5 +85,8 @@ export const {
     setUser,
     setSession,
     setWatchHistory,
+    setWatchLater,
+    addToWatchLater,
+    removeFromWatchLater,
 } = homeSlice.actions;
 export default homeSlice.reducer;

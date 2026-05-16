@@ -4,7 +4,7 @@ import { supabase } from "../../utils/supabaseClient";
 import dayjs from "dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { BsFillPlayFill } from "react-icons/bs";
-import { addToHistory } from "../../store/homeSlice";
+import { addToHistory, removeFromWatchLater } from "../../store/homeSlice";
 import useFetch from "../../hooks/useFetch";
 import ContentWrapper from "../contentWrapper/ContentWrapper";
 import EpisodeList from "./EpisodeList";
@@ -30,7 +30,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { url, watchHistory } = useSelector((state) => state.home);
+    const { url, watchHistory, watchLater } = useSelector((state) => state.home);
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
 
     // Check for redirected state (from login/signup) or saved progress
@@ -247,7 +247,20 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                     }, { onConflict: 'user_id, tmdb_id' });
 
                 if (error) console.error("Sync Error:", error);
-                else console.log("Progress Synced to Supabase");
+                else {
+                    console.log("Progress Synced to Supabase");
+                    
+                    // Auto-remove from Watch Later if it exists
+                    if (watchLater.some(item => item.id === tmdbId)) {
+                        dispatch(removeFromWatchLater(tmdbId));
+                        await supabase
+                            .from('watch_later')
+                            .delete()
+                            .eq('tmdb_id', tmdbId)
+                            .eq('user_id', user.id);
+                        console.log("Auto-removed from Watch Later");
+                    }
+                }
             }
         };
 
