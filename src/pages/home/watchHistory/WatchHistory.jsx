@@ -3,21 +3,43 @@ import { useSelector, useDispatch } from "react-redux";
 import { removeFromHistory, clearHistory } from "../../../store/homeSlice";
 import ContentWrapper from "../../../components/contentWrapper/ContentWrapper";
 import Carousel from "../../../components/carousel/Carousel";
+import { supabase } from "../../../utils/supabaseClient";
 import "./style.scss";
 
 const WatchHistory = () => {
     const dispatch = useDispatch();
-    const { watchHistory } = useSelector((state) => state.home);
+    const { watchHistory, user } = useSelector((state) => state.home);
 
     if (watchHistory.length === 0) return null;
 
-    const onRemove = (id) => {
+    const onRemove = async (id) => {
         dispatch(removeFromHistory(id));
+        
+        // Sync with Supabase if logged in
+        if (supabase && user) {
+            const { error } = await supabase
+                .from('watch_history')
+                .delete()
+                .eq('tmdb_id', id)
+                .eq('user_id', user.id);
+            
+            if (error) console.error("Error deleting item from cloud:", error);
+        }
     };
 
-    const onClearAll = () => {
+    const onClearAll = async () => {
         if (window.confirm("Are you sure you want to clear all your watch history?")) {
             dispatch(clearHistory());
+
+            // Sync with Supabase if logged in
+            if (supabase && user) {
+                const { error } = await supabase
+                    .from('watch_history')
+                    .delete()
+                    .eq('user_id', user.id);
+                
+                if (error) console.error("Error clearing cloud history:", error);
+            }
         }
     };
 

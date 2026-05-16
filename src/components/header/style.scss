@@ -88,6 +88,108 @@
 
             cursor: pointer;
 
+            &.account, &.login {
+                .userIcon {
+                    font-size: 24px;
+                    @include md {
+                        font-size: 28px;
+                    }
+                }
+            }
+
+            &.account {
+                position: relative;
+                
+                .avatarWrapper {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    border: 2px solid rgba(255, 255, 255, 1);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: border-color 0.3s;
+
+                    @include md {
+                        width: 36px;
+                        height: 36px;
+                    }
+
+                    .userAvatar {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .userIcon {
+                        font-size: 100%;
+                    }
+                }
+
+                &:hover .avatarWrapper {
+                    border-color: var(--pink);
+                }
+
+                .accountDropdown {
+                    position: absolute;
+                    top: 60px;
+                    right: -15px;
+                    background: rgba(18, 18, 18, 0.95);
+                    backdrop-filter: blur(15px);
+                    list-style: none;
+                    padding: 8px 0;
+                    border-radius: 12px;
+                    min-width: 200px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    animation: fadeIn 0.2s ease;
+                    overflow: hidden;
+
+                    .userInfo {
+                        padding: 15px 20px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2px;
+                        pointer-events: none;
+
+                        .userName {
+                            font-size: 15px;
+                            font-weight: 600;
+                            color: white;
+                        }
+
+                        .userEmail {
+                            font-size: 12px;
+                            color: rgba(255, 255, 255, 0.5);
+                        }
+                    }
+
+                    .divider {
+                        height: 1px;
+                        background: rgba(255, 255, 255, 0.1);
+                        margin: 4px 0;
+                        padding: 0;
+                    }
+
+                    li:not(.userInfo):not(.divider) {
+                        padding: 12px 20px;
+                        color: rgba(255, 255, 255, 0.8);
+                        font-size: 14px;
+                        white-space: nowrap;
+                        transition: all 0.2s;
+                        display: block;
+                        width: 100%;
+
+                        &:hover {
+                            background: rgba(255, 255, 255, 0.08);
+                            color: white;
+                            padding-left: 24px;
+                        }
+                    }
+                }
+            }
+
             &:hover {
                 color: var(--pink);
             }
@@ -104,8 +206,27 @@
         }
 
         svg {
-            font-size: 18px;
+            font-size: 20px;
             color: white;
+            cursor: pointer;
+        }
+
+        .mobileAvatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1.5px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
         }
     }
 

@@ -6,6 +6,8 @@ export const homeSlice = createSlice({
         url: {},
         genres: {},
         watchHistory: JSON.parse(localStorage.getItem("watchHistory")) || [],
+        user: null,
+        session: null,
     },
     reducers: {
         getApiConfiguration: (state, action) => {
@@ -41,6 +43,16 @@ export const homeSlice = createSlice({
             state.watchHistory = [];
             localStorage.removeItem("watchHistory");
         },
+        setUser: (state, action) => {
+            state.user = action.payload;
+        },
+        setSession: (state, action) => {
+            state.session = action.payload;
+        },
+        setWatchHistory: (state, action) => {
+            state.watchHistory = action.payload;
+            localStorage.setItem("watchHistory", JSON.stringify(action.payload));
+        },
     },
 });
 
@@ -49,6 +61,9 @@ export const {
     getGenres,
     addToHistory,
     removeFromHistory,
-    clearHistory
+    clearHistory,
+    setUser,
+    setSession,
+    setWatchHistory,
 } = homeSlice.actions;
 export default homeSlice.reducer;

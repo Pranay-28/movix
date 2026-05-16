@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { HiOutlineSearch } from "react-icons/hi";
+import { HiOutlineSearch, HiOutlineUserCircle } from "react-icons/hi";
 import { SlMenu } from "react-icons/sl";
 import { VscChromeClose } from "react-icons/vsc";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { supabase } from "../../utils/supabaseClient";
 
 import "./style.scss";
 
@@ -15,8 +17,17 @@ const Header = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [query, setQuery] = useState("");
   const [showSearch, setShowSearch] = useState("");
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const { user } = useSelector((state) => state.home);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    navigate("/");
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -85,6 +96,41 @@ const Header = () => {
           <li className="menuItem" onClick={() => {
             navigationHandler("tv")
           }}>TVShows</li>
+          {user ? (
+            <li 
+              className="menuItem account" 
+              onClick={() => setShowAccountMenu(!showAccountMenu)}
+              onMouseEnter={() => setShowAccountMenu(true)}
+              onMouseLeave={() => setShowAccountMenu(false)}
+            >
+              <div className="avatarWrapper">
+                {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                  <img 
+                    src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} 
+                    alt="profile" 
+                    className="userAvatar"
+                  />
+                ) : (
+                  <HiOutlineUserCircle className="userIcon" />
+                )}
+              </div>
+              {showAccountMenu && (
+                <ul className="accountDropdown">
+                  <li className="userInfo">
+                    <span className="userName">{user?.user_metadata?.full_name || 'User'}</span>
+                    <span className="userEmail">{user?.email}</span>
+                  </li>
+                  <li className="divider"></li>
+                  <li onClick={() => navigate("/login")}>Change Account</li>
+                  <li onClick={handleLogout}>Logout</li>
+                </ul>
+              )}
+            </li>
+          ) : (
+            <li className="menuItem login" onClick={() => navigate("/login")}>
+              <HiOutlineUserCircle className="userIcon" />
+            </li>
+          )}
           <li className="menuItem">
             <HiOutlineSearch onClick={openSearch} />
           </li>
@@ -92,11 +138,24 @@ const Header = () => {
 
         <div className="mobileMenuItems">
           <HiOutlineSearch onClick={openSearch} />
+          {user ? (
+            <div className="mobileAvatar" onClick={() => navigate("/login")}>
+              {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                <img 
+                  src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} 
+                  alt="profile" 
+                />
+              ) : (
+                <HiOutlineUserCircle />
+              )}
+            </div>
+          ) : (
+            <HiOutlineUserCircle onClick={() => navigate("/login")} />
+          )}
           {mobileMenu ? (
             <VscChromeClose onClick={() => setMobileMenu(false)} />
           ) : (
-            <SlMenu onClick={openMobileMenu
-            } />
+            <SlMenu onClick={openMobileMenu} />
           )}
         </div>
 

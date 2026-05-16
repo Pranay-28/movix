@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../../utils/supabaseClient";
 import dayjs from "dayjs";
 import { useDispatch, useSelector } from "react-redux";
 import { BsFillPlayFill } from "react-icons/bs";
@@ -25,15 +27,34 @@ const TV_SOURCES = [
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { url, watchHistory } = useSelector((state) => state.home);
     const { data, loading } = useFetch(`/${mediaType}/${tmdbId}`);
 
-    // Check for saved progress in history
+    // Check for redirected state (from login/signup) or saved progress
+    const redirectState = location.state?.redirectState || (() => {
+        const stored = localStorage.getItem("movix_redirect_state");
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Check if state is fresh (last 10 mins)
+            if (Date.now() - parsed.ts < 600000 && parsed.tmdbId === tmdbId) {
+                localStorage.removeItem("movix_redirect_state");
+                return parsed;
+            }
+        }
+        return null;
+    })();
+
     const savedProgress = watchHistory.find((item) => item.id === tmdbId);
 
-    const [season, setSeason] = useState(savedProgress?.season || 1);
-    const [episode, setEpisode] = useState(savedProgress?.episode || 1);
+    const [season, setSeason] = useState(
+        redirectState?.season || savedProgress?.season || 1
+    );
+    const [episode, setEpisode] = useState(
+        redirectState?.episode || savedProgress?.episode || 1
+    );
 
     // Fetch episodes for the selected season
     const { data: seasonData, loading: seasonLoading } = useFetch(
@@ -71,22 +92,32 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
         return () => clearTimeout(historyTimer);
     }, [data, loading, startedLoading, tmdbId, mediaType, dispatch, season, episode]);
 
-    // Reset state when media changes (or initialize from history)
+    const isRedirectApplied = useRef(!!redirectState);
+
+    const hasAttemptedRestore = useRef(null);
+
+    // Initial Reset when movie changes
     useEffect(() => {
-        const item = watchHistory.find((i) => i.id === tmdbId);
-        if (item && mediaType === "tv") {
-            setSeason(item.season || 1);
-            setEpisode(item.episode || 1);
-        } else {
-            setSeason(1);
-            setEpisode(1);
-        }
         setSourceIndex(0);
         setAllFailed(false);
         setShowPlayButton(false);
         setStartedLoading(false);
         setIframeKey((k) => k + 1);
+        hasAttemptedRestore.current = null; // Allow a new restore check
     }, [tmdbId, mediaType]);
+
+    // Restore from History (Both local and Cloud arrival)
+    useEffect(() => {
+        // Only attempt restore if we haven't successfully restored for this ID yet
+        if (hasAttemptedRestore.current === tmdbId) return;
+
+        const item = watchHistory.find((i) => i.id === tmdbId);
+        if (item && mediaType === "tv") {
+            setSeason(item.season || 1);
+            setEpisode(item.episode || 1);
+            hasAttemptedRestore.current = tmdbId;
+        }
+    }, [watchHistory, tmdbId, mediaType]);
 
     const isTV = mediaType === "tv";
     const sources = isTV ? TV_SOURCES : MOVIE_SOURCES;
@@ -143,6 +174,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const handleIframeLoad = () => {
         // Clear the fallback timer on successful load
         if (timerRef.current) clearTimeout(timerRef.current);
+        setStartedLoading(true); // Ensure sync starts once iframe is ready
     };
 
     const handleRetry = () => {
@@ -154,6 +186,82 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     };
 
 
+
+    const { user } = useSelector((state) => state.home);
+    const [authBlocked, setAuthBlocked] = useState(false);
+    
+    // Initialize watchTime from localStorage to prevent refresh loophole
+    const [watchTime, setWatchTime] = useState(() => {
+        if (user) return 0;
+        const stored = localStorage.getItem(`movix_watch_time_${tmdbId}`);
+        return stored ? parseInt(stored) : 0;
+    });
+
+    // Paywall Logic for TV
+    useEffect(() => {
+        if (!user && mediaType === "tv" && episode > 1) {
+            setAuthBlocked(true);
+        } else {
+            setAuthBlocked(false);
+        }
+    }, [user, mediaType, episode]);
+
+    // Paywall Logic for Movies (2 minutes for testing, 35 for production)
+    useEffect(() => {
+        let timer;
+        if (!user && mediaType === "movie" && !showPlayButton && !loading && !authBlocked) {
+            timer = setInterval(() => {
+                setWatchTime((prev) => {
+                    const nextTime = prev + 1;
+                    localStorage.setItem(`movix_watch_time_${tmdbId}`, nextTime.toString());
+                    
+                    if (nextTime >= 2 * 60) { // 2 minutes (Changed for testing)
+                        setAuthBlocked(true);
+                        clearInterval(timer);
+                    }
+                    return nextTime;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [user, mediaType, showPlayButton, loading, authBlocked, tmdbId]);
+
+    // Save Progress to Supabase
+    useEffect(() => {
+        const saveProgress = async () => {
+            if (supabase && user && data && startedLoading) {
+                const { error } = await supabase
+                    .from('watch_history')
+                    .upsert({
+                        user_id: user.id,
+                        tmdb_id: tmdbId,
+                        title: data.title || data.name,
+                        media_type: mediaType,
+                        poster_path: data.poster_path,
+                        vote_average: data.vote_average,
+                        release_date: data.release_date || data.first_air_date,
+                        genre_ids: data.genres?.map((g) => g.id) || [],
+                        season: mediaType === "tv" ? season : null,
+                        episode: mediaType === "tv" ? episode : null,
+                        last_watched_at: new Date().toISOString(),
+                    }, { onConflict: 'user_id, tmdb_id' });
+                
+                if (error) console.error("Sync Error:", error);
+                else console.log("Progress Synced to Supabase");
+            }
+        };
+
+        // Initial sync after 10s of watching, then every 30s
+        const initialDelay = setTimeout(saveProgress, 10000);
+        const interval = setInterval(saveProgress, 30000);
+        
+        return () => {
+            clearTimeout(initialDelay);
+            clearInterval(interval);
+        };
+    }, [user, data, startedLoading, tmdbId, mediaType, season, episode]);
+
+    // ... (keep existing useEffects or merge them)
 
     if (loading) {
         return (
@@ -168,6 +276,8 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
 
     if (!data && !loading) return null;
 
+
+
     return (
         <div className="videoPlayerSection">
             <ContentWrapper>
@@ -175,65 +285,87 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                     {isTV ? `Watching: ${data.name} (S${season}E${episode})` : "Watch Now"}
                 </div>
 
-                <div className="playerWrapper">
-                    {showPlayButton ? (
-                        <div
-                            className="playPlaceholder"
-                            onClick={() => {
-                                setShowPlayButton(false);
-                                setStartedLoading(true);
-                            }}
-                            style={{
-                                backgroundImage: `url(${url.backdrop + data.backdrop_path})`
-                            }}
-                        >
-                            <div className="overlay"></div>
-                            <div className="playContent">
-                                <div className="playIconWrapper">
-                                    <BsFillPlayFill />
+                <div 
+                    className="playerWrapper"
+                    style={{
+                        backgroundImage: authBlocked ? `url(${url.backdrop + data?.backdrop_path})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    }}
+                >
+                    {/* Always show the base content (Placeholder or Video) */}
+                    {!authBlocked && (
+                        showPlayButton ? (
+                            <div
+                                className="playPlaceholder"
+                                onClick={() => {
+                                    setShowPlayButton(false);
+                                    setStartedLoading(true);
+                                }}
+                                style={{
+                                    backgroundImage: `url(${url.backdrop + data.backdrop_path})`
+                                }}
+                            >
+                                <div className="overlay"></div>
+                                <div className="playContent">
+                                    <div className="playIconWrapper">
+                                        <BsFillPlayFill />
+                                    </div>
+                                    <span className="playTitle">{data.title || data.name}</span>
+                                    <span className="playYear">
+                                        {dayjs(data.release_date || data.first_air_date).format("YYYY")}
+                                    </span>
                                 </div>
-                                <span className="playTitle">{data.title || data.name}</span>
-                                <span className="playYear">
-                                    {dayjs(data.release_date || data.first_air_date).format("YYYY")}
-                                </span>
                             </div>
-                        </div>
-                    ) : (
-                        <>
-                            {allFailed ? (
-                                <div className="errorMessage">
-                                    <span className="errorIcon">⚠️</span>
-                                    <p>
-                                        All streaming sources are currently
-                                        unavailable.
-                                    </p>
-                                    <button
-                                        className="retryBtn"
-                                        onClick={handleRetry}
-                                    >
-                                        Retry
-                                    </button>
-                                </div>
-                            ) : (
-                                <iframe
-                                    key={iframeKey}
-                                    src={currentUrl}
-                                    width="100%"
-                                    height="500"
-                                    frameBorder="0"
-                                    allowFullScreen
-                                    allow="autoplay; encrypted-media"
-                                    onError={handleSourceError}
-                                    onLoad={handleIframeLoad}
-                                    title={
-                                        isTV
-                                            ? `${data.name || data.title} S${season}E${episode}`
-                                            : data.name || data.title
-                                    }
-                                />
-                            )}
-                        </>
+                        ) : (
+                            <>
+                                {allFailed ? (
+                                    <div className="errorMessage">
+                                        <span className="errorIcon">⚠️</span>
+                                        <p>
+                                            All streaming sources are currently
+                                            unavailable.
+                                        </p>
+                                        <button
+                                            className="retryBtn"
+                                            onClick={handleRetry}
+                                        >
+                                            Retry
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <iframe
+                                        key={iframeKey}
+                                        src={currentUrl}
+                                        width="100%"
+                                        height="500"
+                                        frameBorder="0"
+                                        allowFullScreen
+                                        allow="autoplay; encrypted-media"
+                                        onError={handleSourceError}
+                                        onLoad={handleIframeLoad}
+                                        title={
+                                            isTV
+                                                ? `${data.name || data.title} S${season}E${episode}`
+                                                : data.name || data.title
+                                        }
+                                    />
+                                )}
+                            </>
+                        )
                     )}
+
+                    {/* Show AuthOverlay on top if blocked */}
+                    <AuthOverlay 
+                        mediaType={mediaType}
+                        authBlocked={authBlocked}
+                        setAuthBlocked={setAuthBlocked}
+                        season={season}
+                        episode={episode}
+                        tmdbId={tmdbId}
+                        navigate={navigate}
+                        location={location}
+                    />
                 </div>
 
                 <div className="sourceInfo">
@@ -305,3 +437,67 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
 };
 
 export default VideoPlayer;
+
+const AuthOverlay = ({ mediaType, authBlocked, setAuthBlocked, season, episode, tmdbId, navigate, location }) => {
+    if (!authBlocked) return null;
+    
+    return (
+        <div className="authOverlay">
+            <div className="overlayContent">
+                <span className="lockIcon">🔒</span>
+                <h2>Continue Watching for Free!</h2>
+                <p>
+                    Movix is 100% free. Create a free account to continue
+                    watching this {mediaType === "tv" ? "series" : "movie"} and
+                    sync your progress across all your devices.
+                </p>
+                <div className="authActions">
+                    <button
+                        className="loginBtn"
+                        onClick={() => {
+                            localStorage.setItem("movix_redirect_state", JSON.stringify({
+                                season,
+                                episode,
+                                tmdbId,
+                                ts: Date.now()
+                            }));
+                            navigate("/login", {
+                                state: {
+                                    from: location,
+                                    redirectState: { season, episode },
+                                },
+                            });
+                        }}
+                    >
+                        Login
+                    </button>
+                    <button
+                        className="signupBtn"
+                        onClick={() => {
+                            localStorage.setItem("movix_redirect_state", JSON.stringify({
+                                season,
+                                episode,
+                                tmdbId,
+                                ts: Date.now()
+                            }));
+                            navigate("/signup", {
+                                state: {
+                                    from: location,
+                                    redirectState: { season, episode },
+                                },
+                            });
+                        }}
+                    >
+                        Sign Up Free
+                    </button>
+                    <button
+                        className="closeBtn"
+                        onClick={() => setAuthBlocked(false)}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};

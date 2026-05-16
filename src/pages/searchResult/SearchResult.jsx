@@ -7,13 +7,30 @@ import {fetchDataFromApi } from "../../utils/api";
 import ContentWrapper from '../../components/contentWrapper/ContentWrapper'; 
 import MovieCard from "../../components/movieCard/MovieCard"
 import Spinner from "../../components/spinner/Spinner";
+import { useSelector } from "react-redux";
+import { supabase } from "../../utils/supabaseClient";
 import noResults from "../../assets/no-results.png";
 
 const SearchResult = () => {
   const [data, setData] = useState(null);
   const [pageNum, setPageNum] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { user } = useSelector((state) => state.home);
   const { query } = useParams();
+
+  // Track search in Supabase
+  useEffect(() => {
+    const trackSearch = async () => {
+      if (user && query) {
+        await supabase.from('search_history').insert({
+          user_id: user.id,
+          query: query,
+          searched_at: new Date().toISOString()
+        });
+      }
+    };
+    trackSearch();
+  }, [user, query]);
 
   const fetchInitialData = () => {
     setLoading(true)

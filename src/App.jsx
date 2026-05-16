@@ -6,7 +6,8 @@ import { fetchDataFromApi } from './utils/api';
 
 import { useSelector, useDispatch } from 'react-redux';
 
-import { getApiConfiguration, getGenres } from './store/homeSlice';
+import { getApiConfiguration, getGenres, setUser, setSession, setWatchHistory } from './store/homeSlice';
+import { supabase } from './utils/supabaseClient';
 
 import Footer from './components/footer/Footer';
 import Header from './components/header/Header';
@@ -15,16 +16,60 @@ import Details from './pages/details/Details';
 import Explore from './pages/explore/Explore';
 import Home from './pages/home/Home';
 import SearchResult from './pages/searchResult/SearchResult';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
 
 function App() {
   const dispatch = useDispatch()
   const { url } = useSelector((state) =>
     state.home);
 
+  const fetchWatchHistory = async (userId) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from('watch_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_watched_at', { ascending: false });
+
+    if (!error && data) {
+        const formattedHistory = data.map(item => ({
+            id: item.tmdb_id,
+            media_type: item.media_type,
+            title: item.title,
+            season: item.season,
+            episode: item.episode,
+            poster_path: item.poster_path,
+            vote_average: item.vote_average || 0,
+            release_date: item.release_date,
+            genre_ids: item.genre_ids || [],
+        }));
+        dispatch(setWatchHistory(formattedHistory));
+    }
+  };
+
 
   useEffect(() => {
     fetchApiConfig();
     genresCall();
+
+    // Initialize Supabase session
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        dispatch(setSession(session));
+        dispatch(setUser(session?.user ?? null));
+        if (session?.user) fetchWatchHistory(session.user.id);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        dispatch(setSession(session));
+        dispatch(setUser(session?.user ?? null));
+        if (session?.user) fetchWatchHistory(session.user.id);
+        else dispatch(setWatchHistory([])); // Clear history on logout
+      });
+
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   const fetchApiConfig = () => {
@@ -71,6 +116,8 @@ function App() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path="/:mediaType/:id" element={<Details />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/search/:query" element={<SearchResult />} />
         <Route path="/explore/:mediaType" element={<Explore />} />
         <Route path='*' element={<PageNotFound />} />

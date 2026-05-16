@@ -80,8 +80,8 @@ const Carousel = ({ data, loading, endpoint, title, onRemove }) => {
                                                 <VscChromeClose />
                                             </div>
                                         )}
-                                        <CircleRating rating={item.vote_average.toFixed(1)} />
-                                        <Genres data={item.genre_ids.slice(0, 2)} />
+                                        <CircleRating rating={item.vote_average?.toFixed(1) || 0} />
+                                        <Genres data={item.genre_ids?.slice(0, 2) || []} />
                                     </div>
                                     <div className="textBlock">
                                         <span className="title">
