@@ -21,7 +21,7 @@ export const homeSlice = createSlice({
             const newItem = action.payload;
             // Remove if already exists to move to top
             let updatedHistory = state.watchHistory.filter(
-                (item) => item.id !== newItem.id
+                (item) => Number(item.id) !== Number(newItem.id)
             );
             // Add to start
             updatedHistory.unshift(newItem);
@@ -35,7 +35,7 @@ export const homeSlice = createSlice({
         removeFromHistory: (state, action) => {
             const id = action.payload;
             const updatedHistory = state.watchHistory.filter(
-                (item) => item.id !== id
+                (item) => Number(item.id) !== Number(id)
             );
             state.watchHistory = updatedHistory;
             localStorage.setItem("watchHistory", JSON.stringify(updatedHistory));
