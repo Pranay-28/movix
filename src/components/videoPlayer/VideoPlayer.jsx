@@ -379,8 +379,10 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         height="500"
                                         frameBorder="0"
                                         allowFullScreen
-                                        allow="autoplay; encrypted-media"
+                                        allow="autoplay; encrypted-media; fullscreen"
                                         referrerPolicy="no-referrer"
+                                        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+                                        style={{ pointerEvents: "auto", zIndex: 10 }}
                                         onError={handleSourceError}
                                         onLoad={handleIframeLoad}
                                         title={
