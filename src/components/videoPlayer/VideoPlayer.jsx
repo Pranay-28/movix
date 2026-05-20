@@ -386,6 +386,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         marginWidth="0"
                                         allow="autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                                         referrerPolicy="no-referrer"
+                                        style={{ pointerEvents: "auto", zIndex: 10, border: "none" }}
                                         onError={handleSourceError}
                                         onLoad={handleIframeLoad}
                                         title={
