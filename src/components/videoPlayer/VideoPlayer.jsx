@@ -214,8 +214,12 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     // Initialize watchTime from localStorage to prevent refresh loophole
     const [watchTime, setWatchTime] = useState(() => {
         if (user) return 0;
-        const stored = localStorage.getItem(`movix_watch_time_${tmdbId}`);
-        return stored ? parseInt(stored) : 0;
+        try {
+            const stored = localStorage.getItem(`movix_watch_time_${tmdbId}`);
+            return stored ? parseInt(stored) : 0;
+        } catch (e) {
+            return 0;
+        }
     });
 
     // Paywall Logic for TV
@@ -376,6 +380,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         frameBorder="0"
                                         allowFullScreen
                                         allow="autoplay; encrypted-media"
+                                        referrerPolicy="no-referrer"
                                         onError={handleSourceError}
                                         onLoad={handleIframeLoad}
                                         title={

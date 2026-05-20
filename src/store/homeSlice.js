@@ -5,8 +5,22 @@ export const homeSlice = createSlice({
     initialState: {
         url: {},
         genres: {},
-        watchHistory: JSON.parse(localStorage.getItem("watchHistory")) || [],
-        watchLater: JSON.parse(localStorage.getItem("watchLater")) || [],
+        watchHistory: (() => {
+            try {
+                return JSON.parse(localStorage.getItem("watchHistory")) || [];
+            } catch (e) {
+                console.error("History Parse Error:", e);
+                return [];
+            }
+        })(),
+        watchLater: (() => {
+            try {
+                return JSON.parse(localStorage.getItem("watchLater")) || [];
+            } catch (e) {
+                console.error("WatchLater Parse Error:", e);
+                return [];
+            }
+        })(),
         user: null,
         session: null,
     },
