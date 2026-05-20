@@ -381,10 +381,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         allowFullScreen={true}
                                         webkitallowfullscreen="true"
                                         mozallowfullscreen="true"
-                                        scrolling="no"
-                                        marginHeight="0"
-                                        marginWidth="0"
-                                        allow="autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                        allow="autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen; clipboard-write; payment-handler"
                                         referrerPolicy="no-referrer"
                                         style={{ pointerEvents: "auto", zIndex: 10, border: "none" }}
                                         onError={handleSourceError}
