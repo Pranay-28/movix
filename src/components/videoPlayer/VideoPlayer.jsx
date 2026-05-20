@@ -379,6 +379,8 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         height="500"
                                         frameBorder="0"
                                         allowFullScreen
+                                        webkitallowfullscreen="true"
+                                        mozallowfullscreen="true"
                                         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                                         referrerPolicy="no-referrer"
                                         style={{ pointerEvents: "auto", zIndex: 10 }}
