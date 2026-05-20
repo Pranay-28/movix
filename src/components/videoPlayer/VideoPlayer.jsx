@@ -378,13 +378,14 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                                         width="100%"
                                         height="500"
                                         frameBorder="0"
-                                        allowFullScreen
-                                        allowfullscreen="allowfullscreen"
+                                        allowFullScreen={true}
                                         webkitallowfullscreen="true"
                                         mozallowfullscreen="true"
-                                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                                        scrolling="no"
+                                        marginHeight="0"
+                                        marginWidth="0"
+                                        allow="autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                                         referrerPolicy="no-referrer"
-                                        style={{ pointerEvents: "auto", zIndex: 10 }}
                                         onError={handleSourceError}
                                         onLoad={handleIframeLoad}
                                         title={
