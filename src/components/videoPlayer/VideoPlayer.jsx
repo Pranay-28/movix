@@ -11,19 +11,19 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
-    (id) => `https://player.videasy.net/movie/${id}`,
-    (id) => `https://vidlink.pro/movie/${id}`,
-    (id) => `https://vidsrc.to/embed/movie/${id}`,
     (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
-    (id) => `https://vidsrc.xyz/embed/movie/${id}`,
+    (id) => `https://vidsrc.pro/embed/movie/${id}`,
+    (id) => `https://vidsrc.me/embed/movie/${id}`,
+    (id) => `https://autoembed.cc/embed/movie/${id}`,
+    (id) => `https://vidlink.pro/movie/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.me/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://autoembed.cc/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
@@ -37,11 +37,16 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const redirectState = location.state?.redirectState || (() => {
         const stored = localStorage.getItem("movix_redirect_state");
         if (stored) {
-            const parsed = JSON.parse(stored);
-            // Check if state is fresh (last 10 mins)
-            if (Date.now() - parsed.ts < 600000 && parsed.tmdbId == tmdbId) {
+            try {
+                const parsed = JSON.parse(stored);
+                // Check if state is fresh (last 10 mins)
+                if (Date.now() - parsed.ts < 600000 && parsed.tmdbId == tmdbId) {
+                    localStorage.removeItem("movix_redirect_state");
+                    return parsed;
+                }
+            } catch (e) {
                 localStorage.removeItem("movix_redirect_state");
-                return parsed;
+                return null;
             }
         }
         return null;
@@ -85,9 +90,21 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     }, [watchHistory.length, numericId]);
 
     // Fetch episodes for the selected season
-    const { data: seasonData, loading: seasonLoading } = useFetch(
-        mediaType === "tv" ? `/tv/${numericId}/season/${season}` : null
-    );
+    const seasonUrl = mediaType === "tv" ? `/tv/${numericId}/season/${season}` : null;
+    const { data: seasonData, loading: seasonLoading, error: seasonError } = useFetch(seasonUrl);
+
+    // Debug logging for live site investigation
+    useEffect(() => {
+        if (mediaType === "tv") {
+            console.log("Season Fetch Debug:", {
+                url: seasonUrl,
+                dataReceived: !!seasonData,
+                episodesCount: seasonData?.episodes?.length || 0,
+                loading: seasonLoading,
+                error: seasonError
+            });
+        }
+    }, [seasonUrl, seasonData, seasonLoading, seasonError, mediaType]);
 
     const [sourceIndex, setSourceIndex] = useState(0);
     const [allFailed, setAllFailed] = useState(false);
@@ -95,6 +112,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const [iframeKey, setIframeKey] = useState(0);
     const [startedLoading, setStartedLoading] = useState(false);
     const timerRef = useRef(null);
+
 
     // Track Watch History with a 10-second delay
     useEffect(() => {
@@ -177,7 +195,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const handleIframeLoad = () => {
         // Clear the fallback timer on successful load
         if (timerRef.current) clearTimeout(timerRef.current);
-        setStartedLoading(true); // Ensure sync starts once iframe is ready
+        setStartedLoading(true); 
     };
 
     const handleRetry = () => {
