@@ -11,19 +11,19 @@ import EpisodeList from "./EpisodeList";
 import "./style.scss";
 
 const MOVIE_SOURCES = [
-    (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
-    (id) => `https://vidsrc.pro/embed/movie/${id}`,
-    (id) => `https://vidsrc.me/embed/movie/${id}`,
-    (id) => `https://autoembed.cc/embed/movie/${id}`,
+    (id) => `https://player.videasy.net/movie/${id}`,
+    (id) => `https://vidsrc.lol/embed/movie/${id}`,
     (id) => `https://vidlink.pro/movie/${id}`,
+    (id) => `https://vidsrc.mov/embed/movie/${id}`,
+    (id) => `https://www.2embed.stream/embed/movie/${id}`,
 ];
 
 const TV_SOURCES = [
-    (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://vidsrc.me/embed/tv/${id}/${s}/${e}`,
-    (id, s, e) => `https://autoembed.cc/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://player.videasy.net/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.lol/embed/tv/${id}/${s}/${e}`,
     (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://vidsrc.mov/embed/tv/${id}/${s}/${e}`,
+    (id, s, e) => `https://www.2embed.stream/embed/tv/${id}/${s}/${e}`,
 ];
 
 const VideoPlayer = ({ mediaType, tmdbId }) => {
@@ -65,11 +65,11 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     if (activeId !== numericId) {
         const item = watchHistory.find((i) => Number(i.id) === numericId);
         const rState = (redirectState && Number(redirectState.tmdbId) === numericId) ? redirectState : null;
-        
+
         setSeason(rState?.season || item?.season || 1);
         setEpisode(rState?.episode || item?.episode || 1);
         setActiveId(numericId);
-        
+
         // Full UI state reset for the new series
         setSourceIndex(0);
         setAllFailed(false);
@@ -195,7 +195,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
     const handleIframeLoad = () => {
         // Clear the fallback timer on successful load
         if (timerRef.current) clearTimeout(timerRef.current);
-        setStartedLoading(true); 
+        setStartedLoading(true);
     };
 
     const handleRetry = () => {
@@ -274,7 +274,7 @@ const VideoPlayer = ({ mediaType, tmdbId }) => {
                 if (error) console.error("Sync Error:", error);
                 else {
                     console.log("Progress Synced to Supabase");
-                    
+
                     // Auto-remove from Watch Later if it exists
                     if (watchLater.some(item => item.id === tmdbId)) {
                         dispatch(removeFromWatchLater(tmdbId));
